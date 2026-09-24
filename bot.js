@@ -1,19 +1,22 @@
-const { Bot } = require("node-telegram-bot-api");
+const { Bot, registerExpressWebhook } = require("node-telegram-bot-api");
 const express = require("express");
 
 const token = process.env.BOT_TOKEN;
 
+if (!token) {
+    console.error("BOT_TOKEN не найден!");
+    process.exit(1);
+}
+
 const bot = new Bot(token);
 const app = express();
 
-app.use(express.json());
-
+// Главное меню
 bot.on("message", async (ctx) => {
     const text = ctx.message.text;
 
     console.log("Отримано:", text);
 
-    // Головне меню
     if (text === "/start") {
         await ctx.reply(
             "👋 Вітаємо!\n\n" +
@@ -36,7 +39,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Створення сайтів
     else if (text === "💻 Створення сайтів") {
         await ctx.reply(
             "💻 Створення сайтів\n\n" +
@@ -49,7 +51,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Telegram-боти
     else if (text === "🤖 Telegram-боти") {
         await ctx.reply(
             "🤖 Telegram-боти для бізнесу\n\n" +
@@ -63,7 +64,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Про нас
     else if (text === "ℹ️ Про нас") {
         await ctx.reply(
             "ℹ️ Про нас\n\n" +
@@ -76,7 +76,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Контакти
     else if (text === "📞 Контакти") {
         await ctx.reply(
             "📞 Зв'яжіться з нами\n\n" +
@@ -86,7 +85,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Наш сайт
     else if (text === "🌐 Наш сайт") {
         await ctx.reply(
             "🌐 Наш сайт\n\n" +
@@ -95,7 +93,6 @@ bot.on("message", async (ctx) => {
         );
     }
 
-    // Невідоме повідомлення
     else {
         await ctx.reply(
             "Оберіть потрібний розділ за допомогою меню 👇"
@@ -107,12 +104,18 @@ bot.catch((error) => {
     console.error("Помилка:", error);
 });
 
-// Сервер для Render
-const PORT = process.env.PORT || 3000;
+// Telegram Webhook
+registerExpressWebhook(bot, app, {
+    path: "/telegram"
+});
 
+// Проверка сервера
 app.get("/", (req, res) => {
     res.send("Telegram bot is running!");
 });
+
+// Render PORT
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Сервер запущений на порту ${PORT}`);
