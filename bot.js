@@ -1,8 +1,12 @@
 const { Bot } = require("node-telegram-bot-api");
+const express = require("express");
 
 const token = process.env.BOT_TOKEN;
 
 const bot = new Bot(token);
+const app = express();
+
+app.use(express.json());
 
 bot.on("message", async (ctx) => {
     const text = ctx.message.text;
@@ -77,7 +81,7 @@ bot.on("message", async (ctx) => {
         await ctx.reply(
             "📞 Зв'яжіться з нами\n\n" +
             "Потрібен сайт або Telegram-бот для вашого бізнесу?\n\n" +
-            "💬 Telegram: @Tuzkozirn1|@xxamih\n\n" +
+            "💬 Telegram: @Tuzkozirn1 | @xxamih\n\n" +
             "Напишіть нам — обговоримо ваше завдання!"
         );
     }
@@ -103,9 +107,13 @@ bot.catch((error) => {
     console.error("Помилка:", error);
 });
 
-async function start() {
-    await bot.startPolling();
-    console.log("Бот запущений та очікує на повідомлення!");
-}
+// Сервер для Render
+const PORT = process.env.PORT || 3000;
 
-start();
+app.get("/", (req, res) => {
+    res.send("Telegram bot is running!");
+});
+
+app.listen(PORT, () => {
+    console.log(`Сервер запущений на порту ${PORT}`);
+});
