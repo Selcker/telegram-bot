@@ -11,12 +11,18 @@ if (!token) {
 const bot = new Bot(token);
 const app = express();
 
-// Главное меню
+
+// ====================
+// ГЛАВНОЕ МЕНЮ
+// ====================
+
 bot.on("message", async (ctx) => {
     const text = ctx.message.text;
 
     console.log("Отримано:", text);
 
+
+    // /start
     if (text === "/start") {
         await ctx.reply(
             "👋 Вітаємо!\n\n" +
@@ -39,6 +45,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Створення сайтів
     else if (text === "💻 Створення сайтів") {
         await ctx.reply(
             "💻 Створення сайтів\n\n" +
@@ -51,6 +59,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Telegram-боти
     else if (text === "🤖 Telegram-боти") {
         await ctx.reply(
             "🤖 Telegram-боти для бізнесу\n\n" +
@@ -64,6 +74,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Про нас
     else if (text === "ℹ️ Про нас") {
         await ctx.reply(
             "ℹ️ Про нас\n\n" +
@@ -76,6 +88,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Контакти
     else if (text === "📞 Контакти") {
         await ctx.reply(
             "📞 Зв'яжіться з нами\n\n" +
@@ -85,6 +99,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Наш сайт
     else if (text === "🌐 Наш сайт") {
         await ctx.reply(
             "🌐 Наш сайт\n\n" +
@@ -93,6 +109,8 @@ bot.on("message", async (ctx) => {
         );
     }
 
+
+    // Невідоме повідомлення
     else {
         await ctx.reply(
             "Оберіть потрібний розділ за допомогою меню 👇"
@@ -100,21 +118,33 @@ bot.on("message", async (ctx) => {
     }
 });
 
+
+// Обработка ошибок
 bot.catch((error) => {
     console.error("Помилка:", error);
 });
 
-// Telegram Webhook
+
+// ====================
+// TELEGRAM WEBHOOK
+// ====================
+
 registerExpressWebhook(bot, app, {
-    path: "/telegram"
+    path: "/telegram",
+    allowUnauthenticated: true
 });
+
 
 // Проверка сервера
 app.get("/", (req, res) => {
     res.send("Telegram bot is running!");
 });
 
-// Render PORT
+
+// ====================
+// PORT ДЛЯ RENDER
+// ====================
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
