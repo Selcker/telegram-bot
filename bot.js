@@ -53,7 +53,7 @@ function mainMenu() {
 }
 
 // ========================================
-// Назад
+// Кнопка назад
 // ========================================
 
 function backMenu() {
@@ -188,7 +188,7 @@ async function sendHome(ctx) {
 }
 
 // ========================================
-// Поиск слов
+// Проверка слов
 // ========================================
 
 function containsAny(text, words) {
@@ -497,6 +497,8 @@ bot.on("message", async (ctx) => {
             ? "@" + ctx.from.username
             : "не вказано";
 
+        orderStates.set(userId, state);
+
         const previewText =
             "📋 ПЕРЕВІРТЕ ВАШУ ЗАЯВКУ\n\n" +
             "👤 Ім'я:\n" +
@@ -510,6 +512,9 @@ bot.on("message", async (ctx) => {
             "\n\n" +
             "📝 Опис:\n" +
             state.description +
+            "\n\n" +
+            "💬 Telegram:\n" +
+            state.username +
             "\n\n" +
             "Все правильно? 👇";
 
@@ -759,6 +764,8 @@ bot.on("callback_query", async (ctx) => {
 
         state.step = "description";
 
+        orderStates.set(userId, state);
+
         await editOrderMessage(
             userId,
             state.messageId,
@@ -844,6 +851,9 @@ bot.on("callback_query", async (ctx) => {
             "👤 Ім'я:\n" +
             state.name +
             "\n\n" +
+            "💬 Username:\n" +
+            state.username +
+            "\n\n" +
             "📞 Контакт:\n" +
             state.contact +
             "\n\n" +
@@ -851,14 +861,12 @@ bot.on("callback_query", async (ctx) => {
             state.service +
             "\n\n" +
             "📝 Опис:\n" +
-            state.description +
-            "\n\n" +
-            "👤 Telegram:\n" +
-            state.username;
+            state.description;
 
         pendingOrders.set(orderId, {
             userId: userId,
             name: state.name,
+            username: state.username,
             orderId: orderId,
             clientMessageId: state.messageId,
             status: "sent"
@@ -881,7 +889,7 @@ bot.on("callback_query", async (ctx) => {
                 shortOrderId +
                 "\n\n" +
                 "📊 Статус: 📨 ВІДПРАВЛЕНА\n\n" +
-                "Ваша заявка успішно передана.\n" +
+                "Вашу заявку успішно передано.\n" +
                 "Ми зв'яжемося з вами найближчим часом 🤝",
                 mainMenu()
             );
@@ -930,7 +938,7 @@ bot.on("callback_query", async (ctx) => {
         }
 
         try {
-            // Обновляем статус для клиента
+            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -944,7 +952,7 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем сообщение администратора
+            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -954,6 +962,9 @@ bot.on("callback_query", async (ctx) => {
                     "\n\n" +
                     "👤 Клієнт: " +
                     order.name +
+                    "\n" +
+                    "💬 Username: " +
+                    order.username +
                     "\n\n" +
                     "📊 Статус: 🛠 В РОБОТІ",
                 reply_markup: adminWorkingMenu(orderId)
@@ -976,7 +987,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Админ — завершить заявку
+    // Админ — завершить
     // ========================================
 
     if (data.startsWith("admin:complete:")) {
@@ -996,7 +1007,7 @@ bot.on("callback_query", async (ctx) => {
         }
 
         try {
-            // Обновляем статус для клиента
+            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -1009,7 +1020,7 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем сообщение администратора
+            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -1019,6 +1030,9 @@ bot.on("callback_query", async (ctx) => {
                     "\n\n" +
                     "👤 Клієнт: " +
                     order.name +
+                    "\n" +
+                    "💬 Username: " +
+                    order.username +
                     "\n\n" +
                     "📊 Статус: ✅ ЗАВЕРШЕНА"
             });
@@ -1059,7 +1073,7 @@ bot.on("callback_query", async (ctx) => {
         }
 
         try {
-            // Обновляем статус для клиента
+            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -1072,7 +1086,7 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем сообщение администратора
+            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -1082,6 +1096,9 @@ bot.on("callback_query", async (ctx) => {
                     "\n\n" +
                     "👤 Клієнт: " +
                     order.name +
+                    "\n" +
+                    "💬 Username: " +
+                    order.username +
                     "\n\n" +
                     "📊 Статус: ❌ ВІДХИЛЕНА"
             });
