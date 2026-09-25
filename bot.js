@@ -40,7 +40,8 @@ bot.on("message", async (ctx) => {
                         ["📞 Контакти"],
                         ["🌐 Наш сайт"]
                     ],
-                    resize_keyboard: true
+                    resize_keyboard: true,
+                    is_persistent: true
                 }
             }
         );
