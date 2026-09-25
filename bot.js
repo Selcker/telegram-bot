@@ -1279,6 +1279,7 @@ bot.on("message", async (ctx) => {
 
 registerExpressWebhook(bot, app, {
   path: "/telegram",
+  allowUnauthenticated: true,
 });
 
 app.get("/", (req, res) => {
