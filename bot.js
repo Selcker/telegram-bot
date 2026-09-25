@@ -1,7 +1,8 @@
 const {
     Bot,
     registerExpressWebhook,
-    ReplyKeyboardBuilder
+    ReplyKeyboardBuilder,
+    InlineKeyboardBuilder
 } = require("node-telegram-bot-api");
 
 const express = require("express");
@@ -16,10 +17,10 @@ if (!token) {
 const bot = new Bot(token);
 const app = express();
 
-// Твой Telegram ID
+// Telegram ID администратора
 const ADMIN_CHAT_ID = 1215947826;
 
-// Состояния заказов пользователей
+// Состояния заказов
 const orderStates = new Map();
 
 // ========================================
@@ -29,15 +30,12 @@ const orderStates = new Map();
 function mainMenu() {
     return new ReplyKeyboardBuilder()
         .text("💻 Створення сайтів")
-        .row()
         .text("🤖 Telegram-боти")
         .row()
         .text("📝 Замовити")
-        .row()
         .text("ℹ️ Про нас")
         .row()
         .text("📞 Контакти")
-        .row()
         .text("🌐 Наш сайт")
         .build({
             resize_keyboard: true,
@@ -46,7 +44,7 @@ function mainMenu() {
 }
 
 // ========================================
-// Кнопка отмены
+// Меню отмены
 // ========================================
 
 function cancelMenu() {
@@ -64,17 +62,28 @@ function cancelMenu() {
 function serviceMenu() {
     return new ReplyKeyboardBuilder()
         .text("💻 Сайт")
-        .row()
         .text("🤖 Telegram-бот")
         .row()
         .text("⚙️ Автоматизація")
-        .row()
         .text("📦 Інше")
         .row()
         .text("❌ Скасувати")
         .build({
             resize_keyboard: true
         });
+}
+
+// ========================================
+// Inline-кнопки подтверждения
+// ========================================
+
+function confirmOrderMenu() {
+    return new InlineKeyboardBuilder()
+        .text("✅ Відправити", "order:confirm")
+        .text("✏️ Змінити", "order:edit")
+        .row()
+        .text("❌ Скасувати", "order:cancel")
+        .build();
 }
 
 // ========================================
@@ -88,7 +97,7 @@ bot.on("message", async (ctx) => {
     console.log("Отримано:", text);
 
     // ========================================
-    // Команда /start
+    // /start
     // ========================================
 
     if (text === "/start") {
@@ -131,7 +140,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Создание сайтов
+    // СОЗДАНИЕ САЙТОВ
     // ========================================
 
     if (text === "💻 Створення сайтів") {
@@ -155,7 +164,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Telegram-боты
+    // TELEGRAM-БОТЫ
     // ========================================
 
     if (text === "🤖 Telegram-боти") {
@@ -176,7 +185,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // О нас
+    // ПРО НАС
     // ========================================
 
     if (text === "ℹ️ Про нас") {
@@ -198,7 +207,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Контакты
+    // КОНТАКТЫ
     // ========================================
 
     if (text === "📞 Контакти") {
@@ -218,7 +227,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Наш сайт
+    // НАШ САЙТ
     // ========================================
 
     if (text === "🌐 Наш сайт") {
@@ -235,7 +244,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Начало заказа
+    // НАЧАЛО ЗАКАЗА
     // ========================================
 
     if (text === "📝 Замовити") {
@@ -245,9 +254,9 @@ bot.on("message", async (ctx) => {
 
         await ctx.reply(
             "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
-            "Давайте оформимо заявку.\n\n" +
-            "Крок 1 з 4\n\n" +
-            "👤 Напишіть ваше ім'я:",
+            "Зараз швидко оформимо вашу заявку.\n\n" +
+            "1️⃣ КРОК 1 З 4\n\n" +
+            "👤 Як вас звати?",
             {
                 reply_markup: cancelMenu()
             }
@@ -263,7 +272,7 @@ bot.on("message", async (ctx) => {
     const state = orderStates.get(userId);
 
     // ========================================
-    // Шаг 1 — имя
+    // ЭТАП 1 — ИМЯ
     // ========================================
 
     if (state && state.step === "name") {
@@ -272,9 +281,9 @@ bot.on("message", async (ctx) => {
 
         await ctx.reply(
             "✅ Ім'я збережено.\n\n" +
-            "Крок 2 з 4\n\n" +
-            "📞 Напишіть ваш номер телефону\n" +
-            "або Telegram username:\n\n" +
+            "2️⃣ КРОК 2 З 4\n\n" +
+            "📞 Вкажіть номер телефону\n" +
+            "або ваш Telegram username.\n\n" +
             "Наприклад:\n" +
             "+380XXXXXXXXX\n" +
             "@username",
@@ -287,7 +296,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 2 — контакт
+    // ЭТАП 2 — КОНТАКТ
     // ========================================
 
     if (state && state.step === "contact") {
@@ -296,8 +305,8 @@ bot.on("message", async (ctx) => {
 
         await ctx.reply(
             "✅ Контакт збережено.\n\n" +
-            "Крок 3 з 4\n\n" +
-            "💼 Що вам потрібно?",
+            "3️⃣ КРОК 3 З 4\n\n" +
+            "💼 Що саме вам потрібно?",
             {
                 reply_markup: serviceMenu()
             }
@@ -307,7 +316,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 3 — услуга
+    // ЭТАП 3 — УСЛУГА
     // ========================================
 
     if (state && state.step === "service") {
@@ -316,12 +325,11 @@ bot.on("message", async (ctx) => {
 
         await ctx.reply(
             "✅ Послугу вибрано.\n\n" +
-            "Крок 4 з 4\n\n" +
-            "📝 Коротко опишіть ваше завдання.\n\n" +
+            "4️⃣ КРОК 4 З 4\n\n" +
+            "📝 Розкажіть трохи про ваше завдання.\n\n" +
             "Наприклад:\n" +
             "«Потрібен сайт для магазину одягу»\n\n" +
-            "Чим детальніше опишете завдання,\n" +
-            "тим краще ми зможемо вам допомогти.",
+            "Опишіть усе, що вважаєте важливим 👇",
             {
                 reply_markup: cancelMenu()
             }
@@ -331,50 +339,45 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 4 — описание
+    // ЭТАП 4 — ОПИСАНИЕ
     // ========================================
 
     if (state && state.step === "description") {
         state.description = text;
+        state.step = "confirm";
 
-        const orderText =
-            "📩 НОВА ЗАЯВКА\n\n" +
-            "👤 Ім'я: " + state.name + "\n" +
-            "📞 Контакт: " + state.contact + "\n" +
-            "💼 Послуга: " + state.service + "\n\n" +
+        // Сохраняем Telegram пользователя
+        state.username = ctx.from?.username
+            ? "@" + ctx.from.username
+            : "не вказано";
+
+        orderStates.set(userId, state);
+
+        // ========================================
+        // Предпросмотр заявки
+        // ========================================
+
+        const previewText =
+            "📋 ПЕРЕВІРТЕ ВАШУ ЗАЯВКУ\n\n" +
+
+            "👤 Ім'я:\n" +
+            state.name + "\n\n" +
+
+            "📞 Контакт:\n" +
+            state.contact + "\n\n" +
+
+            "💼 Послуга:\n" +
+            state.service + "\n\n" +
+
             "📝 Опис:\n" +
-            state.description;
+            state.description + "\n\n" +
 
-        console.log("=================================");
-        console.log(orderText);
-        console.log("=================================");
+            "Все правильно?";
 
-        // Отправляем заявку тебе
-        try {
-            await bot.api.sendMessage({
-                chat_id: ADMIN_CHAT_ID,
-                text: orderText
-            });
-
-            console.log("Заявка відправлена адміністратору.");
-        } catch (error) {
-            console.error(
-                "Помилка відправки заявки адміністратору:",
-                error
-            );
-        }
-
-        orderStates.delete(userId);
-
-        // Ответ клиенту
         await ctx.reply(
-            "🎉 ЗАЯВКУ ПРИЙНЯТО!\n\n" +
-            "Дякуємо, " + state.name + "!\n\n" +
-            "Ми отримали вашу заявку.\n\n" +
-            "💼 Послуга: " + state.service + "\n\n" +
-            "Ми зв'яжемося з вами найближчим часом 🤝",
+            previewText,
             {
-                reply_markup: mainMenu()
+                reply_markup: confirmOrderMenu()
             }
         );
 
@@ -395,7 +398,154 @@ bot.on("message", async (ctx) => {
 });
 
 // ========================================
-// Обработка ошибок
+// Обработчик inline-кнопок
+// ========================================
+
+bot.on("callback_query", async (ctx) => {
+    const data = ctx.callbackQuery?.data;
+    const userId = ctx.from?.id;
+
+    // Убираем "часики" с кнопки
+    await ctx.answerCallbackQuery();
+
+    const state = orderStates.get(userId);
+
+    // ========================================
+    // Подтверждение заказа
+    // ========================================
+
+    if (data === "order:confirm") {
+        if (!state || state.step !== "confirm") {
+            await ctx.reply(
+                "⚠️ Ця заявка вже була оброблена."
+            );
+
+            return;
+        }
+
+        const orderText =
+            "📩 НОВА ЗАЯВКА\n\n" +
+
+            "👤 Ім'я: " +
+            state.name +
+            "\n\n" +
+
+            "📞 Контакт: " +
+            state.contact +
+            "\n\n" +
+
+            "💼 Послуга: " +
+            state.service +
+            "\n\n" +
+
+            "📝 Опис:\n" +
+            state.description +
+            "\n\n" +
+
+            "👤 Telegram: " +
+            state.username;
+
+        console.log("=================================");
+        console.log(orderText);
+        console.log("=================================");
+
+        try {
+            await bot.api.sendMessage({
+                chat_id: ADMIN_CHAT_ID,
+                text: orderText
+            });
+
+            console.log("Заявка відправлена адміністратору.");
+
+            orderStates.delete(userId);
+
+            await ctx.reply(
+                "🎉 ЗАЯВКУ ВІДПРАВЛЕНО!\n\n" +
+                "Дякуємо, " +
+                state.name +
+                "!\n\n" +
+                "Ми отримали ваше замовлення.\n" +
+                "Зв'яжемося з вами найближчим часом 🤝",
+                {
+                    reply_markup: mainMenu()
+                }
+            );
+        } catch (error) {
+            console.error(
+                "Помилка відправки заявки:",
+                error
+            );
+
+            await ctx.reply(
+                "⚠️ Виникла помилка під час відправки заявки.\n\n" +
+                "Спробуйте ще раз трохи пізніше.",
+                {
+                    reply_markup: mainMenu()
+                }
+            );
+        }
+
+        return;
+    }
+
+    // ========================================
+    // Изменить заявку
+    // ========================================
+
+    if (data === "order:edit") {
+        if (!state) {
+            await ctx.reply(
+                "⚠️ Заявку не знайдено. Почніть оформлення ще раз.",
+                {
+                    reply_markup: mainMenu()
+                }
+            );
+
+            return;
+        }
+
+        state.step = "name";
+        state.name = "";
+        state.contact = "";
+        state.service = "";
+        state.description = "";
+
+        orderStates.set(userId, state);
+
+        await ctx.reply(
+            "✏️ ДОБРЕ!\n\n" +
+            "Почнемо оформлення заявки заново.\n\n" +
+            "1️⃣ КРОК 1 З 4\n\n" +
+            "👤 Як вас звати?",
+            {
+                reply_markup: cancelMenu()
+            }
+        );
+
+        return;
+    }
+
+    // ========================================
+    // Отмена через inline-кнопку
+    // ========================================
+
+    if (data === "order:cancel") {
+        orderStates.delete(userId);
+
+        await ctx.reply(
+            "❌ Замовлення скасовано.\n\n" +
+            "Повертаємося до головного меню 👇",
+            {
+                reply_markup: mainMenu()
+            }
+        );
+
+        return;
+    }
+});
+
+// ========================================
+// Ошибки
 // ========================================
 
 bot.catch((error) => {
