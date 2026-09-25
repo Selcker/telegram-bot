@@ -16,7 +16,15 @@ if (!token) {
 const bot = new Bot(token);
 const app = express();
 
+// ========================================
+// Настройки
+// ========================================
+
 const ADMIN_CHAT_ID = 1215947826;
+
+// ========================================
+// Хранилища
+// ========================================
 
 const orderStates = new Map();
 const pendingOrders = new Map();
@@ -55,7 +63,7 @@ function backMenu() {
 }
 
 // ========================================
-// Отмена
+// Отмена заявки
 // ========================================
 
 function cancelOrderMenu() {
@@ -111,8 +119,17 @@ function adminOrderMenu(orderId) {
         .build();
 }
 
+function adminWorkingMenu(orderId) {
+    return new InlineKeyboardBuilder()
+        .text(
+            "✅ Завершити",
+            `admin:complete:${orderId}`
+        )
+        .build();
+}
+
 // ========================================
-// Редактирование сообщения
+// Редактирование текущего сообщения
 // ========================================
 
 async function editCurrentMessage(ctx, text, replyMarkup) {
@@ -131,7 +148,7 @@ async function editCurrentMessage(ctx, text, replyMarkup) {
 }
 
 // ========================================
-// Редактирование сообщения заявки
+// Редактирование сообщения заказа
 // ========================================
 
 async function editOrderMessage(
@@ -171,7 +188,7 @@ async function sendHome(ctx) {
 }
 
 // ========================================
-// Проверка слов
+// Поиск слов
 // ========================================
 
 function containsAny(text, words) {
@@ -346,8 +363,7 @@ bot.on("message", async (ctx) => {
                 "Потрібен сайт або Telegram-бот?\n\n" +
                 "💬 Telegram:\n" +
                 "@Tuzkozirn1\n" +
-                "@xxamih\n\n" +
-                "Напишіть нам — обговоримо ваше завдання.",
+                "@xxamih",
                 {
                     reply_markup: backMenu()
                 }
@@ -356,7 +372,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Про нас
+        // О нас
         if (
             containsAny(normalizedText, [
                 "кто вы",
@@ -374,8 +390,7 @@ bot.on("message", async (ctx) => {
                 "💻 Сайти\n" +
                 "🤖 Telegram-боти\n" +
                 "⚙️ Автоматизація\n\n" +
-                "Працюємо під конкретні завдання\n" +
-                "та побажання клієнта.",
+                "Працюємо під конкретні завдання.",
                 {
                     reply_markup: backMenu()
                 }
@@ -384,7 +399,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Портфолио / сайт
+        // Портфолио
         if (
             containsAny(normalizedText, [
                 "наш сайт",
@@ -510,7 +525,7 @@ bot.on("message", async (ctx) => {
 });
 
 // ========================================
-// Обработка inline-кнопок
+// Inline-кнопки
 // ========================================
 
 bot.on("callback_query", async (ctx) => {
@@ -762,7 +777,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Отмена
+    // Отмена заявки
     // ========================================
 
     if (data === "order:cancel") {
@@ -779,7 +794,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Изменить заявку
+    // Изменение заявки
     // ========================================
 
     if (data === "order:edit") {
@@ -822,17 +837,31 @@ bot.on("callback_query", async (ctx) => {
 
         const orderText =
             "📩 НОВА ЗАЯВКА\n\n" +
-            "🔢 Номер: #" + shortOrderId + "\n\n" +
-            "👤 Ім'я:\n" + state.name + "\n\n" +
-            "📞 Контакт:\n" + state.contact + "\n\n" +
-            "💼 Послуга:\n" + state.service + "\n\n" +
-            "📝 Опис:\n" + state.description + "\n\n" +
-            "👤 Telegram:\n" + state.username;
+            "🔢 Номер: #" +
+            shortOrderId +
+            "\n\n" +
+            "📊 Статус: 📨 ВІДПРАВЛЕНА\n\n" +
+            "👤 Ім'я:\n" +
+            state.name +
+            "\n\n" +
+            "📞 Контакт:\n" +
+            state.contact +
+            "\n\n" +
+            "💼 Послуга:\n" +
+            state.service +
+            "\n\n" +
+            "📝 Опис:\n" +
+            state.description +
+            "\n\n" +
+            "👤 Telegram:\n" +
+            state.username;
 
         pendingOrders.set(orderId, {
             userId: userId,
             name: state.name,
-            orderId: orderId
+            orderId: orderId,
+            clientMessageId: state.messageId,
+            status: "sent"
         });
 
         try {
@@ -847,16 +876,18 @@ bot.on("callback_query", async (ctx) => {
             await editOrderMessage(
                 userId,
                 state.messageId,
-                "🎉 ЗАЯВКУ ВІДПРАВЛЕНО!\n\n" +
-                "Дякуємо, " + state.name + "!\n\n" +
-                "Вашу заявку #" + shortOrderId +
-                " успішно передано.\n\n" +
+                "📨 ЗАЯВКА ВІДПРАВЛЕНА\n\n" +
+                "🔢 Номер: #" +
+                shortOrderId +
+                "\n\n" +
+                "📊 Статус: 📨 ВІДПРАВЛЕНА\n\n" +
+                "Ваша заявка успішно передана.\n" +
                 "Ми зв'яжемося з вами найближчим часом 🤝",
                 mainMenu()
             );
 
             console.log(
-                `Заявка #${shortOrderId} відправлена адміністратору.`
+                `Заявка #${shortOrderId} відправлена.`
             );
         } catch (error) {
             console.error(
@@ -884,10 +915,6 @@ bot.on("callback_query", async (ctx) => {
 
     if (data.startsWith("admin:accept:")) {
         if (userId !== ADMIN_CHAT_ID) {
-            await ctx.answerCallbackQuery({
-                text: "⛔ Доступ заборонено."
-            });
-
             return;
         }
 
@@ -895,19 +922,94 @@ bot.on("callback_query", async (ctx) => {
         const order = pendingOrders.get(orderId);
 
         if (!order) {
+            await ctx.reply(
+                "⚠️ Заявка не знайдена або вже оброблена."
+            );
+
             return;
         }
 
         try {
-            await bot.api.sendMessage({
-                chat_id: order.userId,
+            // Обновляем статус для клиента
+            await editOrderMessage(
+                order.userId,
+                order.clientMessageId,
+                "🛠 ЗАЯВКА В РОБОТІ\n\n" +
+                "🔢 Номер: #" +
+                orderId.slice(-6) +
+                "\n\n" +
+                "📊 Статус: 🛠 В РОБОТІ\n\n" +
+                "Ми вже працюємо над вашим замовленням.\n\n" +
+                "Найближчим часом з вами зв'яжуться 🤝",
+                mainMenu()
+            );
+
+            // Обновляем сообщение администратора
+            await bot.api.editMessageText({
+                chat_id: ADMIN_CHAT_ID,
+                message_id: ctx.callbackQuery.message.message_id,
                 text:
-                    "✅ ВАШЕ ЗАМОВЛЕННЯ ПРИЙНЯТО\n\n" +
-                    "Дякуємо, " + order.name + "!\n\n" +
-                    "Ми взяли вашу заявку в роботу.\n" +
-                    "Найближчим часом з вами зв'яжуться 🤝"
+                    "🛠 ЗАЯВКА #" +
+                    orderId.slice(-6) +
+                    "\n\n" +
+                    "👤 Клієнт: " +
+                    order.name +
+                    "\n\n" +
+                    "📊 Статус: 🛠 В РОБОТІ",
+                reply_markup: adminWorkingMenu(orderId)
             });
 
+            order.status = "working";
+            pendingOrders.set(orderId, order);
+
+            console.log(
+                `Заявка #${orderId.slice(-6)} взята в роботу.`
+            );
+        } catch (error) {
+            console.error(
+                "Помилка зміни статусу:",
+                error
+            );
+        }
+
+        return;
+    }
+
+    // ========================================
+    // Админ — завершить заявку
+    // ========================================
+
+    if (data.startsWith("admin:complete:")) {
+        if (userId !== ADMIN_CHAT_ID) {
+            return;
+        }
+
+        const orderId = data.split(":")[2];
+        const order = pendingOrders.get(orderId);
+
+        if (!order) {
+            await ctx.reply(
+                "⚠️ Заявка не знайдена або вже оброблена."
+            );
+
+            return;
+        }
+
+        try {
+            // Обновляем статус для клиента
+            await editOrderMessage(
+                order.userId,
+                order.clientMessageId,
+                "✅ ЗАЯВКУ ЗАВЕРШЕНО\n\n" +
+                "🔢 Номер: #" +
+                orderId.slice(-6) +
+                "\n\n" +
+                "📊 Статус: ✅ ЗАВЕРШЕНА\n\n" +
+                "Дякуємо за звернення до XXAMIh! 🤝",
+                mainMenu()
+            );
+
+            // Обновляем сообщение администратора
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -915,13 +1017,20 @@ bot.on("callback_query", async (ctx) => {
                     "✅ ЗАЯВКА #" +
                     orderId.slice(-6) +
                     "\n\n" +
-                    "Статус: В РОБОТІ 🛠"
+                    "👤 Клієнт: " +
+                    order.name +
+                    "\n\n" +
+                    "📊 Статус: ✅ ЗАВЕРШЕНА"
             });
 
             pendingOrders.delete(orderId);
+
+            console.log(
+                `Заявка #${orderId.slice(-6)} завершена.`
+            );
         } catch (error) {
             console.error(
-                "Помилка повідомлення клієнту:",
+                "Помилка завершення заявки:",
                 error
             );
         }
@@ -935,10 +1044,6 @@ bot.on("callback_query", async (ctx) => {
 
     if (data.startsWith("admin:reject:")) {
         if (userId !== ADMIN_CHAT_ID) {
-            await ctx.answerCallbackQuery({
-                text: "⛔ Доступ заборонено."
-            });
-
             return;
         }
 
@@ -946,18 +1051,28 @@ bot.on("callback_query", async (ctx) => {
         const order = pendingOrders.get(orderId);
 
         if (!order) {
+            await ctx.reply(
+                "⚠️ Заявка не знайдена або вже оброблена."
+            );
+
             return;
         }
 
         try {
-            await bot.api.sendMessage({
-                chat_id: order.userId,
-                text:
-                    "ℹ️ ЩОДО ВАШОЇ ЗАЯВКИ\n\n" +
-                    "Дякуємо за звернення.\n\n" +
-                    "На жаль, наразі ми не можемо взяти це замовлення в роботу."
-            });
+            // Обновляем статус для клиента
+            await editOrderMessage(
+                order.userId,
+                order.clientMessageId,
+                "❌ ЗАЯВКУ ВІДХИЛЕНО\n\n" +
+                "🔢 Номер: #" +
+                orderId.slice(-6) +
+                "\n\n" +
+                "📊 Статус: ❌ ВІДХИЛЕНА\n\n" +
+                "Дякуємо за звернення до XXAMIh.",
+                mainMenu()
+            );
 
+            // Обновляем сообщение администратора
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -965,13 +1080,20 @@ bot.on("callback_query", async (ctx) => {
                     "❌ ЗАЯВКА #" +
                     orderId.slice(-6) +
                     "\n\n" +
-                    "Статус: ВІДХИЛЕНО"
+                    "👤 Клієнт: " +
+                    order.name +
+                    "\n\n" +
+                    "📊 Статус: ❌ ВІДХИЛЕНА"
             });
 
             pendingOrders.delete(orderId);
+
+            console.log(
+                `Заявка #${orderId.slice(-6)} відхилена.`
+            );
         } catch (error) {
             console.error(
-                "Помилка повідомлення клієнту:",
+                "Помилка відхилення заявки:",
                 error
             );
         }
@@ -981,7 +1103,7 @@ bot.on("callback_query", async (ctx) => {
 });
 
 // ========================================
-// Ошибки
+// Обработка ошибок
 // ========================================
 
 bot.catch((error) => {
