@@ -150,9 +150,20 @@ bot.on("message", async (ctx) => {
 
     if (text === "/start") {
         orderStates.delete(userId);
-
+    
+        // Убираем старую клавиатуру снизу
+        await ctx.reply(
+            "🔄 Оновлюємо меню..."
+            , {
+                reply_markup: {
+                    remove_keyboard: true
+                }
+            }
+        );
+    
+        // Показываем новое меню с кнопками внутри сообщения
         await sendHome(ctx);
-
+    
         return;
     }
 
