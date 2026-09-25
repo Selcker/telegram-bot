@@ -39,11 +39,65 @@ function mainMenu() {
         .text("🤖 Telegram-боти", "menu:bots")
         .row()
         .text("📝 Замовити", "menu:order")
-        .text("ℹ️ Про нас", "menu:about")
+        .text("⭐ Переваги", "menu:advantages")
         .row()
+        .text("🛠 Як працюємо", "menu:process")
+        .text("📂 Портфоліо", "menu:portfolio")
+        .row()
+        .text("ℹ️ Про нас", "menu:about")
         .text("📞 Контакти", "menu:contacts")
+        .row()
+        .url("💬 Написати нам", "https://t.me/Tuzkozirn1")
         .url("🌐 Наш сайт", "https://xxamihsite.vercel.app/")
         .build();
+}
+if (data === "menu:advantages") {
+    await editCurrentMessage(
+        ctx,
+        "⭐ ЧОМУ XXAMIh?\n\n" +
+        "🚀 Сучасні рішення\n" +
+        "Створюємо актуальні сайти та Telegram-ботів.\n\n" +
+        "🎯 Під ваше завдання\n" +
+        "Не шаблон під усіх, а рішення під конкретний бізнес.\n\n" +
+        "📱 Адаптивність\n" +
+        "Все має зручно працювати на телефоні та ПК.\n\n" +
+        "🤝 Зворотний зв'язок\n" +
+        "Працюємо разом із клієнтом від ідеї до готового результату.",
+        backMenu()
+    );
+
+    return;
+}
+if (data === "menu:process") {
+    await editCurrentMessage(
+        ctx,
+        "🛠 ЯК МИ ПРАЦЮЄМО\n\n" +
+        "1️⃣ Знайомство\n" +
+        "Дізнаємося, що вам потрібно.\n\n" +
+        "2️⃣ Обговорення\n" +
+        "Уточнюємо деталі та формат роботи.\n\n" +
+        "3️⃣ Розробка\n" +
+        "Створюємо сайт, бота або автоматизацію.\n\n" +
+        "4️⃣ Результат\n" +
+        "Передаємо готовий продукт та допомагаємо із запуском.\n\n" +
+        "✨ Просто. Зрозуміло. По справі.",
+        backMenu()
+    );
+
+    return;
+}
+if (data === "menu:portfolio") {
+    await editCurrentMessage(
+        ctx,
+        "📂 ПОРТФОЛІО\n\n" +
+        "Подивіться наші роботи та рішення для бізнесу.\n\n" +
+        "🌐 Сайт:\n" +
+        "https://xxamihsite.vercel.app/\n\n" +
+        "Там можна переглянути наші проєкти та стиль роботи.",
+        backMenu()
+    );
+
+    return;
 }
 
 // ========================================
