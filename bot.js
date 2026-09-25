@@ -50,9 +50,11 @@ function mainMenu() {
         .text("⭐ Переваги", "menu:advantages")
         .row()
         .text("🛠 Як працюємо", "menu:process")
-        .text("📂 Портфоліо", "menu:portfolio")
+        .text("☁️ Хостинг", "menu:hosting")
         .row()
+        .text("📂 Портфоліо", "menu:portfolio")
         .text("ℹ️ Про нас", "menu:about")
+        .row()
         .text("📞 Контакти", "menu:contacts")
         .row()
         .url("💬 Написати нам", "https://t.me/Tuzkozirn1")
@@ -61,7 +63,7 @@ function mainMenu() {
 }
 
 // ========================================
-// Назад
+// Кнопка назад
 // ========================================
 
 function backMenu() {
@@ -115,15 +117,24 @@ function confirmOrderMenu() {
 
 function adminOrderMenu(orderId) {
     return new InlineKeyboardBuilder()
-        .text("✅ Взяти в роботу", `admin:accept:${orderId}`)
+        .text(
+            "✅ Взяти в роботу",
+            `admin:accept:${orderId}`
+        )
         .row()
-        .text("❌ Відхилити", `admin:reject:${orderId}`)
+        .text(
+            "❌ Відхилити",
+            `admin:reject:${orderId}`
+        )
         .build();
 }
 
 function adminWorkingMenu(orderId) {
     return new InlineKeyboardBuilder()
-        .text("✅ Завершити", `admin:complete:${orderId}`)
+        .text(
+            "✅ Завершити",
+            `admin:complete:${orderId}`
+        )
         .build();
 }
 
@@ -151,7 +162,7 @@ function adminOrdersMenu() {
 }
 
 // ========================================
-// Статус заявки
+// Статусы
 // ========================================
 
 function getStatusText(status) {
@@ -175,7 +186,15 @@ function getStatusText(status) {
 }
 
 // ========================================
-// Редактирование текущего сообщения
+// Проверка слов
+// ========================================
+
+function containsAny(text, words) {
+    return words.some((word) => text.includes(word));
+}
+
+// ========================================
+// Редактирование сообщения
 // ========================================
 
 async function editCurrentMessage(ctx, text, replyMarkup) {
@@ -194,7 +213,7 @@ async function editCurrentMessage(ctx, text, replyMarkup) {
 }
 
 // ========================================
-// Редактирование сообщения заказа
+// Редактирование сообщения заявки
 // ========================================
 
 async function editOrderMessage(
@@ -212,7 +231,7 @@ async function editOrderMessage(
 }
 
 // ========================================
-// Стартовое сообщение
+// Главное сообщение
 // ========================================
 
 async function sendHome(ctx) {
@@ -222,7 +241,8 @@ async function sendHome(ctx) {
         "Ми допомагаємо створювати:\n\n" +
         "💻 Сучасні сайти\n" +
         "🤖 Telegram-боти\n" +
-        "⚙️ Автоматизацію\n\n" +
+        "⚙️ Автоматизацію\n" +
+        "☁️ Розміщення та хостинг\n\n" +
         "Є ідея або готове завдання?\n" +
         "Розкажіть нам — допоможемо перетворити її\n" +
         "на готовий цифровий продукт.\n\n" +
@@ -231,14 +251,6 @@ async function sendHome(ctx) {
             reply_markup: mainMenu()
         }
     );
-}
-
-// ========================================
-// Проверка слов
-// ========================================
-
-function containsAny(text, words) {
-    return words.some((word) => text.includes(word));
 }
 
 // ========================================
@@ -279,7 +291,9 @@ bot.on("message", async (ctx) => {
 
     if (text === "/start") {
         orderStates.delete(userId);
+
         await sendHome(ctx);
+
         return;
     }
 
@@ -298,6 +312,7 @@ bot.on("message", async (ctx) => {
             .toLowerCase()
             .trim();
 
+        // Приветствие
         if (
             containsAny(normalizedText, [
                 "привет",
@@ -314,6 +329,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Заказ
         if (
             containsAny(normalizedText, [
                 "хочу заказать",
@@ -323,11 +339,7 @@ bot.on("message", async (ctx) => {
                 "оформить заказ",
                 "оформити замовлення",
                 "сделать заказ",
-                "зробити замовлення",
-                "нужен сайт",
-                "потрібен сайт",
-                "нужен бот",
-                "потрібен бот"
+                "зробити замовлення"
             ])
         ) {
             const orderMessage = await ctx.reply(
@@ -348,6 +360,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Сайты
         if (
             containsAny(normalizedText, [
                 "сайт",
@@ -380,6 +393,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Telegram-боты
         if (
             containsAny(normalizedText, [
                 "бот",
@@ -407,6 +421,53 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Хостинг
+        if (
+            containsAny(normalizedText, [
+                "хостинг",
+                "hosting",
+                "разместить сайт",
+                "разместить бота",
+                "розмістити сайт",
+                "розмістити бота",
+                "сервер",
+                "сервере",
+                "сервері"
+            ])
+        ) {
+            await ctx.reply(
+                "☁️ ХОСТИНГ ТА РОЗМІЩЕННЯ\n\n" +
+
+                "🚀 Можемо розмістити ваш сайт або Telegram-бота\n" +
+                "на сервері та налаштувати його для роботи.\n\n" +
+
+                "🆓 FREE — $0 / місяць\n" +
+                "• 0.1 CPU\n" +
+                "• 512 MB RAM\n\n" +
+
+                "⚡ 0.5c-512mb — $7 / місяць\n" +
+                "• 0.5 CPU\n" +
+                "• 512 MB RAM\n\n" +
+
+                "🔥 1c-2g — $25 / місяць\n" +
+                "• 1 CPU\n" +
+                "• 2 GB RAM\n\n" +
+
+                "🚀 2c-4g — $85 / місяць\n" +
+                "• 2 CPU\n" +
+                "• 4 GB RAM\n\n" +
+
+                "💡 Допоможемо підібрати варіант\n" +
+                "під ваш проєкт.",
+                {
+                    reply_markup: backMenu()
+                }
+            );
+
+            return;
+        }
+
+        // Контакты
         if (
             containsAny(normalizedText, [
                 "контакт",
@@ -432,6 +493,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // О нас
         if (
             containsAny(normalizedText, [
                 "кто вы",
@@ -448,7 +510,8 @@ bot.on("message", async (ctx) => {
                 "для сучасного бізнесу.\n\n" +
                 "💻 Сайти\n" +
                 "🤖 Telegram-боти\n" +
-                "⚙️ Автоматизація\n\n" +
+                "⚙️ Автоматизація\n" +
+                "☁️ Хостинг\n\n" +
                 "Працюємо під конкретні завдання.",
                 {
                     reply_markup: backMenu()
@@ -458,6 +521,7 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Портфолио
         if (
             containsAny(normalizedText, [
                 "наш сайт",
@@ -470,9 +534,9 @@ bot.on("message", async (ctx) => {
             ])
         ) {
             await ctx.reply(
-                "🌐 XXAMIh\n\n" +
-                "Наш сайт:\n\n" +
-                "https://xxamihsite.vercel.app/",
+                "📂 ПОРТФОЛІО\n\n" +
+                "Подивіться наші роботи:\n\n" +
+                "🌐 https://xxamihsite.vercel.app/",
                 {
                     reply_markup: backMenu()
                 }
@@ -481,11 +545,13 @@ bot.on("message", async (ctx) => {
             return;
         }
 
+        // Неизвестный запрос
         await ctx.reply(
             "🤔 Не зовсім зрозумів вас.\n\n" +
             "Спробуйте написати:\n\n" +
             "💻 «Хочу сайт»\n" +
             "🤖 «Потрібен Telegram-бот»\n" +
+            "☁️ «Потрібен хостинг»\n" +
             "📝 «Хочу замовити»\n" +
             "📞 «Як з вами зв'язатися?»",
             {
@@ -497,7 +563,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // ШАГ 1 — ИМЯ
+    // Шаг 1 — имя
     // ========================================
 
     if (state.step === "name") {
@@ -522,7 +588,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // ШАГ 2 — КОНТАКТ
+    // Шаг 2 — контакт
     // ========================================
 
     if (state.step === "contact") {
@@ -543,7 +609,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // ШАГ 4 — ОПИСАНИЕ
+    // Шаг 4 — описание
     // ========================================
 
     if (state.step === "description") {
@@ -585,7 +651,7 @@ bot.on("message", async (ctx) => {
 });
 
 // ========================================
-// Callback-кнопки
+// Inline-кнопки
 // ========================================
 
 bot.on("callback_query", async (ctx) => {
@@ -600,7 +666,7 @@ bot.on("callback_query", async (ctx) => {
     await ctx.answerCallbackQuery();
 
     // ========================================
-    // ГЛАВНОЕ МЕНЮ
+    // Главное меню
     // ========================================
 
     if (data === "menu:home") {
@@ -613,7 +679,8 @@ bot.on("callback_query", async (ctx) => {
             "Ми допомагаємо створювати:\n\n" +
             "💻 Сучасні сайти\n" +
             "🤖 Telegram-боти\n" +
-            "⚙️ Автоматизацію\n\n" +
+            "⚙️ Автоматизацію\n" +
+            "☁️ Розміщення та хостинг\n\n" +
             "Є ідея або готове завдання?\n" +
             "Розкажіть нам — допоможемо її реалізувати.\n\n" +
             "Оберіть потрібний розділ 👇",
@@ -624,7 +691,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // САЙТЫ
+    // Сайты
     // ========================================
 
     if (data === "menu:sites") {
@@ -647,7 +714,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // TELEGRAM-БОТЫ
+    // Telegram-боты
     // ========================================
 
     if (data === "menu:bots") {
@@ -667,7 +734,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ПРЕИМУЩЕСТВА
+    // Преимущества
     // ========================================
 
     if (data === "menu:advantages") {
@@ -680,6 +747,8 @@ bot.on("callback_query", async (ctx) => {
             "Рішення під конкретний бізнес.\n\n" +
             "📱 Адаптивність\n" +
             "Коректна робота на телефоні, планшеті та ПК.\n\n" +
+            "☁️ Хостинг\n" +
+            "Допоможемо розмістити проєкт на сервері.\n\n" +
             "🤝 Зворотний зв'язок\n" +
             "Працюємо разом від ідеї до результату.",
             backMenu()
@@ -689,7 +758,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // КАК РАБОТАЕМ
+    // Как работаем
     // ========================================
 
     if (data === "menu:process") {
@@ -702,7 +771,9 @@ bot.on("callback_query", async (ctx) => {
             "Уточнюємо деталі та формат роботи.\n\n" +
             "3️⃣ Розробка\n" +
             "Створюємо сайт, бота або автоматизацію.\n\n" +
-            "4️⃣ Результат\n" +
+            "4️⃣ Розміщення\n" +
+            "За потреби налаштовуємо сервер та запускаємо проєкт.\n\n" +
+            "5️⃣ Результат\n" +
             "Передаємо готовий продукт.",
             backMenu()
         );
@@ -711,7 +782,47 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ПОРТФОЛИО
+    // Хостинг
+    // ========================================
+
+    if (data === "menu:hosting") {
+        await editCurrentMessage(
+            ctx,
+            "☁️ ХОСТИНГ ТА РОЗМІЩЕННЯ\n\n" +
+
+            "🚀 Можемо розмістити ваш сайт або Telegram-бота\n" +
+            "на сервері та налаштувати його для роботи.\n\n" +
+
+            "🆓 FREE\n" +
+            "$0 / місяць\n" +
+            "• 0.1 CPU\n" +
+            "• 512 MB RAM\n\n" +
+
+            "⚡ 0.5c-512mb\n" +
+            "$7 / місяць\n" +
+            "• 0.5 CPU\n" +
+            "• 512 MB RAM\n\n" +
+
+            "🔥 1c-2g\n" +
+            "$25 / місяць\n" +
+            "• 1 CPU\n" +
+            "• 2 GB RAM\n\n" +
+
+            "🚀 2c-4g\n" +
+            "$85 / місяць\n" +
+            "• 2 CPU\n" +
+            "• 4 GB RAM\n\n" +
+
+            "💡 Допоможемо підібрати варіант\n" +
+            "під ваш проєкт та виконати налаштування.",
+            backMenu()
+        );
+
+        return;
+    }
+
+    // ========================================
+    // Портфолио
     // ========================================
 
     if (data === "menu:portfolio") {
@@ -728,7 +839,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ПРО НАС
+    // Про нас
     // ========================================
 
     if (data === "menu:about") {
@@ -739,7 +850,8 @@ bot.on("callback_query", async (ctx) => {
             "для сучасного бізнесу.\n\n" +
             "💻 Сайти\n" +
             "🤖 Telegram-боти\n" +
-            "⚙️ Автоматизація\n\n" +
+            "⚙️ Автоматизація\n" +
+            "☁️ Хостинг\n\n" +
             "Працюємо під конкретні завдання.",
             backMenu()
         );
@@ -748,7 +860,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // КОНТАКТЫ
+    // Контакты
     // ========================================
 
     if (data === "menu:contacts") {
@@ -766,7 +878,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // НАЧАЛО ЗАКАЗА
+    // Начало заказа
     // ========================================
 
     if (data === "menu:order") {
@@ -790,7 +902,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ВЫБОР УСЛУГИ
+    // Выбор услуги
     // ========================================
 
     if (data.startsWith("service:")) {
@@ -826,10 +938,10 @@ bot.on("callback_query", async (ctx) => {
             "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
             "✅ Послугу вибрано.\n\n" +
             "4️⃣ КРОК 4 З 4\n\n" +
-            "💼 " + state.service + "\n\n" +
+            "💼 " +
+            state.service +
+            "\n\n" +
             "📝 Тепер розкажіть трохи про ваше завдання.\n\n" +
-            "Наприклад:\n" +
-            "«Потрібен сайт для магазину одягу»\n\n" +
             "Опишіть усе, що вважаєте важливим 👇",
             cancelOrderMenu()
         );
@@ -838,7 +950,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ОТМЕНА
+    // Отмена заявки
     // ========================================
 
     if (data === "order:cancel") {
@@ -855,7 +967,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ИЗМЕНЕНИЕ ЗАЯВКИ
+    // Изменить заявку
     // ========================================
 
     if (data === "order:edit") {
@@ -877,7 +989,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // ПОДТВЕРЖДЕНИЕ ЗАЯВКИ
+    // Подтверждение заявки
     // ========================================
 
     if (data === "order:confirm") {
@@ -926,15 +1038,15 @@ bot.on("callback_query", async (ctx) => {
             status: "sent"
         });
 
-        statistics.total += 1;
-        statistics.sent += 1;
-
         try {
             await bot.api.sendMessage({
                 chat_id: ADMIN_CHAT_ID,
                 text: orderText,
                 reply_markup: adminOrderMenu(orderId)
             });
+
+            statistics.total += 1;
+            statistics.sent += 1;
 
             orderStates.delete(userId);
 
@@ -951,11 +1063,12 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
         } catch (error) {
-            console.error("Помилка відправки заявки:", error);
+            console.error(
+                "Помилка відправки заявки:",
+                error
+            );
 
             pendingOrders.delete(orderId);
-            statistics.total -= 1;
-            statistics.sent -= 1;
 
             await editOrderMessage(
                 userId,
@@ -1009,14 +1122,23 @@ bot.on("callback_query", async (ctx) => {
             return;
         }
 
-        let ordersText = "📋 АКТИВНІ ЗАЯВКИ\n\n";
+        let ordersText =
+            "📋 АКТИВНІ ЗАЯВКИ\n\n";
 
         for (const [orderId, order] of pendingOrders) {
             ordersText +=
-                "🔢 #" + orderId.slice(-6) + "\n" +
-                "👤 " + order.name + "\n" +
-                "💬 " + order.username + "\n" +
-                "📊 " + getStatusText(order.status) + "\n\n";
+                "🔢 #" +
+                orderId.slice(-6) +
+                "\n" +
+                "👤 " +
+                order.name +
+                "\n" +
+                "💬 " +
+                order.username +
+                "\n" +
+                "📊 " +
+                getStatusText(order.status) +
+                "\n\n";
         }
 
         await editCurrentMessage(
@@ -1151,7 +1273,6 @@ bot.on("callback_query", async (ctx) => {
             statistics.working += 1;
 
             order.status = "working";
-
             pendingOrders.set(orderId, order);
         } catch (error) {
             console.error(
@@ -1291,7 +1412,7 @@ bot.on("callback_query", async (ctx) => {
 });
 
 // ========================================
-// Ошибки
+// Обработка ошибок
 // ========================================
 
 bot.catch((error) => {
@@ -1299,7 +1420,7 @@ bot.catch((error) => {
 });
 
 // ========================================
-// Webhook
+// Telegram Webhook
 // ========================================
 
 registerExpressWebhook(bot, app, {
