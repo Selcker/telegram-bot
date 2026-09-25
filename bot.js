@@ -22,10 +22,11 @@ const app = express();
 
 const ADMIN_CHAT_ID = 1215947826;
 
-// Храним этапы оформления заявок
-const orderStates = new Map();
+// ========================================
+// Хранилища
+// ========================================
 
-// Храним отправленные заявки
+const orderStates = new Map();
 const pendingOrders = new Map();
 
 // ========================================
@@ -51,12 +52,12 @@ function mainMenu() {
 
 function backMenu() {
     return new InlineKeyboardBuilder()
-        .text("← Назад", "menu:home")
+        .text("🔙 Назад", "menu:home")
         .build();
 }
 
 // ========================================
-// Отмена заказа
+// Отмена заявки
 // ========================================
 
 function cancelOrderMenu() {
@@ -95,7 +96,7 @@ function confirmOrderMenu() {
 }
 
 // ========================================
-// Кнопки для администратора
+// Кнопки администратора
 // ========================================
 
 function adminOrderMenu(orderId) {
@@ -113,7 +114,39 @@ function adminOrderMenu(orderId) {
 }
 
 // ========================================
-// Стартовый экран
+// Редактирование текущего сообщения
+// ========================================
+
+async function editCurrentMessage(ctx, text, replyMarkup) {
+    const message = ctx.callbackQuery?.message;
+
+    if (!message) {
+        return;
+    }
+
+    await bot.api.editMessageText({
+        chat_id: message.chat.id,
+        message_id: message.message_id,
+        text: text,
+        reply_markup: replyMarkup
+    });
+}
+
+// ========================================
+// Редактирование сообщения заявки
+// ========================================
+
+async function editOrderMessage(userId, messageId, text, replyMarkup) {
+    await bot.api.editMessageText({
+        chat_id: userId,
+        message_id: messageId,
+        text: text,
+        reply_markup: replyMarkup
+    });
+}
+
+// ========================================
+// Стартовое сообщение
 // ========================================
 
 async function sendHome(ctx) {
@@ -135,7 +168,7 @@ async function sendHome(ctx) {
 }
 
 // ========================================
-// Обработка обычных сообщений
+// Обычные сообщения
 // ========================================
 
 bot.on("message", async (ctx) => {
@@ -150,25 +183,14 @@ bot.on("message", async (ctx) => {
 
     if (text === "/start") {
         orderStates.delete(userId);
-    
-        // Убираем старую клавиатуру снизу
-        await ctx.reply(
-            "🔄 Оновлюємо меню..."
-            , {
-                reply_markup: {
-                    remove_keyboard: true
-                }
-            }
-        );
-    
-        // Показываем новое меню с кнопками внутри сообщения
+
         await sendHome(ctx);
-    
+
         return;
     }
 
     // ========================================
-    // Проверяем состояние заявки
+    // Текущее состояние заказа
     // ========================================
 
     const state = orderStates.get(userId);
@@ -192,17 +214,20 @@ bot.on("message", async (ctx) => {
         state.name = text;
         state.step = "contact";
 
-        await ctx.reply(
+        orderStates.set(userId, state);
+
+        await editOrderMessage(
+            userId,
+            state.messageId,
+            "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
             "✅ Ім'я збережено.\n\n" +
             "2️⃣ КРОК 2 З 4\n\n" +
             "📞 Вкажіть номер телефону\n" +
             "або ваш Telegram username.\n\n" +
-            "Приклад:\n" +
+            "Наприклад:\n" +
             "+380XXXXXXXXX\n" +
             "@username",
-            {
-                reply_markup: cancelOrderMenu()
-            }
+            cancelOrderMenu()
         );
 
         return;
@@ -216,13 +241,16 @@ bot.on("message", async (ctx) => {
         state.contact = text;
         state.step = "service";
 
-        await ctx.reply(
+        orderStates.set(userId, state);
+
+        await editOrderMessage(
+            userId,
+            state.messageId,
+            "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
             "✅ Контакт збережено.\n\n" +
             "3️⃣ КРОК 3 З 4\n\n" +
-            "💼 Оберіть, що вам потрібно:",
-            {
-                reply_markup: serviceMenu()
-            }
+            "💼 Що саме вам потрібно?",
+            serviceMenu()
         );
 
         return;
@@ -263,11 +291,11 @@ bot.on("message", async (ctx) => {
 
             "Все правильно? 👇";
 
-        await ctx.reply(
+        await editOrderMessage(
+            userId,
+            state.messageId,
             previewText,
-            {
-                reply_markup: confirmOrderMenu()
-            }
+            confirmOrderMenu()
         );
 
         return;
@@ -275,19 +303,18 @@ bot.on("message", async (ctx) => {
 });
 
 // ========================================
-// Обработка inline-кнопок
+// Inline-кнопки
 // ========================================
 
 bot.on("callback_query", async (ctx) => {
     const data = ctx.callbackQuery?.data;
     const userId = ctx.from?.id;
 
+    await ctx.answerCallbackQuery();
+
     if (!data) {
-        await ctx.answerCallbackQuery();
         return;
     }
-
-    await ctx.answerCallbackQuery();
 
     // ========================================
     // Главное меню
@@ -296,12 +323,18 @@ bot.on("callback_query", async (ctx) => {
     if (data === "menu:home") {
         orderStates.delete(userId);
 
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "✨ XXAMIh\n\n" +
+            "Цифрові рішення для сучасного бізнесу.\n\n" +
+            "Ми допомагаємо створювати:\n\n" +
+            "💻 Сучасні сайти\n" +
+            "🤖 Telegram-боти\n" +
+            "⚙️ Автоматизацію\n\n" +
+            "Є ідея або готове завдання?\n" +
+            "Розкажіть нам — допоможемо її реалізувати.\n\n" +
             "Оберіть потрібний розділ 👇",
-            {
-                reply_markup: mainMenu()
-            }
+            mainMenu()
         );
 
         return;
@@ -312,9 +345,9 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "menu:sites") {
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "💻 САЙТИ\n\n" +
-
             "🌐 Сайт-візитка\n" +
             "Презентація компанії, послуг та контактів.\n\n" +
 
@@ -328,9 +361,7 @@ bot.on("callback_query", async (ctx) => {
             "Акуратний та професійний зовнішній вигляд.\n\n" +
 
             "🚀 Розробка під ваше завдання.",
-            {
-                reply_markup: backMenu()
-            }
+            backMenu()
         );
 
         return;
@@ -341,19 +372,16 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "menu:bots") {
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "🤖 TELEGRAM-БОТИ\n\n" +
-
             "💬 Спілкування з клієнтами\n" +
             "📋 Послуги та ціни\n" +
             "📝 Прийом заявок\n" +
             "🔔 Автоматичні повідомлення\n" +
             "⚙️ Автоматизація процесів\n\n" +
-
             "Ваш бот може працювати 24/7.",
-            {
-                reply_markup: backMenu()
-            }
+            backMenu()
         );
 
         return;
@@ -364,20 +392,17 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "menu:about") {
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "ℹ️ ПРО XXAMIh\n\n" +
-
-            "Створюємо цифрові продукти для бізнесу.\n\n" +
-
+            "Створюємо цифрові продукти\n" +
+            "для сучасного бізнесу.\n\n" +
             "💻 Сайти\n" +
             "🤖 Telegram-боти\n" +
             "⚙️ Автоматизація\n\n" +
-
             "Працюємо під конкретні завдання\n" +
             "та побажання клієнта.",
-            {
-                reply_markup: backMenu()
-            }
+            backMenu()
         );
 
         return;
@@ -388,17 +413,15 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "menu:contacts") {
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "📞 КОНТАКТИ\n\n" +
-
+            "Потрібен сайт або Telegram-бот?\n\n" +
             "💬 Telegram:\n" +
             "@Tuzkozirn1\n" +
             "@xxamih\n\n" +
-
             "Напишіть нам — обговоримо ваше завдання.",
-            {
-                reply_markup: backMenu()
-            }
+            backMenu()
         );
 
         return;
@@ -409,21 +432,20 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "menu:order") {
+        const message = ctx.callbackQuery.message;
+
         orderStates.set(userId, {
-            step: "name"
+            step: "name",
+            messageId: message.message_id
         });
 
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
-
             "Оформимо заявку всього за 4 кроки.\n\n" +
-
             "1️⃣ КРОК 1 З 4\n\n" +
-
             "👤 Як вас звати?",
-            {
-                reply_markup: cancelOrderMenu()
-            }
+            cancelOrderMenu()
         );
 
         return;
@@ -437,11 +459,10 @@ bot.on("callback_query", async (ctx) => {
         const state = orderStates.get(userId);
 
         if (!state || state.step !== "service") {
-            await ctx.reply(
+            await editCurrentMessage(
+                ctx,
                 "⚠️ Почніть оформлення заявки ще раз.",
-                {
-                    reply_markup: mainMenu()
-                }
+                mainMenu()
             );
 
             return;
@@ -469,38 +490,35 @@ bot.on("callback_query", async (ctx) => {
 
         orderStates.set(userId, state);
 
-        await ctx.reply(
+        await editOrderMessage(
+            userId,
+            state.messageId,
+            "📝 НОВЕ ЗАМОВЛЕННЯ\n\n" +
             "✅ Послугу вибрано.\n\n" +
-
             "4️⃣ КРОК 4 З 4\n\n" +
-
-            "📝 Розкажіть трохи про ваше завдання.\n\n" +
-
+            "💼 " + state.service + "\n\n" +
+            "📝 Тепер розкажіть трохи про ваше завдання.\n\n" +
             "Наприклад:\n" +
             "«Потрібен сайт для магазину одягу»\n\n" +
-
             "Опишіть усе, що вважаєте важливим 👇",
-            {
-                reply_markup: cancelOrderMenu()
-            }
+            cancelOrderMenu()
         );
 
         return;
     }
 
     // ========================================
-    // Отмена
+    // Отмена заявки
     // ========================================
 
     if (data === "order:cancel") {
         orderStates.delete(userId);
 
-        await ctx.reply(
-            "❌ Замовлення скасовано.\n\n" +
+        await editCurrentMessage(
+            ctx,
+            "❌ ЗАМОВЛЕННЯ СКАСОВАНО\n\n" +
             "Повертаємося до головного меню 👇",
-            {
-                reply_markup: mainMenu()
-            }
+            mainMenu()
         );
 
         return;
@@ -511,31 +529,18 @@ bot.on("callback_query", async (ctx) => {
     // ========================================
 
     if (data === "order:edit") {
-        const state = orderStates.get(userId);
-
-        if (!state) {
-            await ctx.reply(
-                "⚠️ Заявку не знайдено.",
-                {
-                    reply_markup: mainMenu()
-                }
-            );
-
-            return;
-        }
-
         orderStates.set(userId, {
-            step: "name"
+            step: "name",
+            messageId: ctx.callbackQuery.message.message_id
         });
 
-        await ctx.reply(
+        await editCurrentMessage(
+            ctx,
             "✏️ ЗМІНА ЗАЯВКИ\n\n" +
-            "Почнемо заповнення заново.\n\n" +
+            "Почнемо оформлення заново.\n\n" +
             "1️⃣ КРОК 1 З 4\n\n" +
             "👤 Як вас звати?",
-            {
-                reply_markup: cancelOrderMenu()
-            }
+            cancelOrderMenu()
         );
 
         return;
@@ -600,21 +605,18 @@ bot.on("callback_query", async (ctx) => {
 
             orderStates.delete(userId);
 
-            await ctx.reply(
+            await editOrderMessage(
+                userId,
+                state.messageId,
                 "🎉 ЗАЯВКУ ВІДПРАВЛЕНО!\n\n" +
-
                 "Дякуємо, " +
                 state.name +
                 "!\n\n" +
-
                 "Вашу заявку #" +
                 shortOrderId +
                 " успішно передано.\n\n" +
-
                 "Ми зв'яжемося з вами найближчим часом 🤝",
-                {
-                    reply_markup: mainMenu()
-                }
+                mainMenu()
             );
 
             console.log(
@@ -628,12 +630,12 @@ bot.on("callback_query", async (ctx) => {
 
             pendingOrders.delete(orderId);
 
-            await ctx.reply(
-                "⚠️ Не вдалося відправити заявку.\n\n" +
+            await editOrderMessage(
+                userId,
+                state.messageId,
+                "⚠️ НЕ ВДАЛОСЯ ВІДПРАВИТИ ЗАЯВКУ\n\n" +
                 "Спробуйте ще раз.",
-                {
-                    reply_markup: mainMenu()
-                }
+                mainMenu()
             );
         }
 
@@ -676,11 +678,15 @@ bot.on("callback_query", async (ctx) => {
                     "Найближчим часом з вами зв'яжуться 🤝"
             });
 
-            await ctx.reply(
-                "✅ Заявку #" +
-                orderId.slice(-6) +
-                " взято в роботу."
-            );
+            await bot.api.editMessageText({
+                chat_id: ADMIN_CHAT_ID,
+                message_id: ctx.callbackQuery.message.message_id,
+                text:
+                    "✅ ЗАЯВКА #" +
+                    orderId.slice(-6) +
+                    "\n\n" +
+                    "Статус: В РОБОТІ 🛠"
+            });
 
             pendingOrders.delete(orderId);
         } catch (error) {
@@ -694,7 +700,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Админ — отклонить заявку
+    // Админ — отклонить
     // ========================================
 
     if (data.startsWith("admin:reject:")) {
@@ -726,11 +732,15 @@ bot.on("callback_query", async (ctx) => {
                     "На жаль, наразі ми не можемо взяти це замовлення в роботу."
             });
 
-            await ctx.reply(
-                "❌ Заявку #" +
-                orderId.slice(-6) +
-                " відхилено."
-            );
+            await bot.api.editMessageText({
+                chat_id: ADMIN_CHAT_ID,
+                message_id: ctx.callbackQuery.message.message_id,
+                text:
+                    "❌ ЗАЯВКА #" +
+                    orderId.slice(-6) +
+                    "\n\n" +
+                    "Статус: ВІДХИЛЕНО"
+            });
 
             pendingOrders.delete(orderId);
         } catch (error) {
