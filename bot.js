@@ -29,6 +29,14 @@ const ADMIN_CHAT_ID = 1215947826;
 const orderStates = new Map();
 const pendingOrders = new Map();
 
+const statistics = {
+    total: 0,
+    sent: 0,
+    working: 0,
+    completed: 0,
+    rejected: 0
+};
+
 // ========================================
 // Главное меню
 // ========================================
@@ -53,7 +61,7 @@ function mainMenu() {
 }
 
 // ========================================
-// Кнопка назад
+// Назад
 // ========================================
 
 function backMenu() {
@@ -107,25 +115,63 @@ function confirmOrderMenu() {
 
 function adminOrderMenu(orderId) {
     return new InlineKeyboardBuilder()
-        .text(
-            "✅ Взяти в роботу",
-            `admin:accept:${orderId}`
-        )
+        .text("✅ Взяти в роботу", `admin:accept:${orderId}`)
         .row()
-        .text(
-            "❌ Відхилити",
-            `admin:reject:${orderId}`
-        )
+        .text("❌ Відхилити", `admin:reject:${orderId}`)
         .build();
 }
 
 function adminWorkingMenu(orderId) {
     return new InlineKeyboardBuilder()
-        .text(
-            "✅ Завершити",
-            `admin:complete:${orderId}`
-        )
+        .text("✅ Завершити", `admin:complete:${orderId}`)
         .build();
+}
+
+// ========================================
+// Админ-панель
+// ========================================
+
+function adminPanelMenu() {
+    return new InlineKeyboardBuilder()
+        .text("📋 Заявки", "admin:orders")
+        .text("📊 Статистика", "admin:stats")
+        .row()
+        .text("⚙️ Налаштування", "admin:settings")
+        .row()
+        .text("🏠 Головне меню", "admin:home")
+        .build();
+}
+
+function adminOrdersMenu() {
+    return new InlineKeyboardBuilder()
+        .text("🔄 Оновити", "admin:orders")
+        .row()
+        .text("🔙 Назад", "admin:home")
+        .build();
+}
+
+// ========================================
+// Статус заявки
+// ========================================
+
+function getStatusText(status) {
+    if (status === "sent") {
+        return "📨 ВІДПРАВЛЕНА";
+    }
+
+    if (status === "working") {
+        return "🛠 В РОБОТІ";
+    }
+
+    if (status === "completed") {
+        return "✅ ЗАВЕРШЕНА";
+    }
+
+    if (status === "rejected") {
+        return "❌ ВІДХИЛЕНА";
+    }
+
+    return "❔ НЕВІДОМИЙ";
 }
 
 // ========================================
@@ -166,7 +212,7 @@ async function editOrderMessage(
 }
 
 // ========================================
-// Главное стартовое сообщение
+// Стартовое сообщение
 // ========================================
 
 async function sendHome(ctx) {
@@ -206,14 +252,34 @@ bot.on("message", async (ctx) => {
     console.log("Отримано:", text);
 
     // ========================================
+    // /admin
+    // ========================================
+
+    if (text === "/admin") {
+        if (userId !== ADMIN_CHAT_ID) {
+            await ctx.reply("⛔ Доступ заборонено.");
+            return;
+        }
+
+        await ctx.reply(
+            "🔐 АДМІН-ПАНЕЛЬ\n\n" +
+            "Панель керування XXAMIh.\n\n" +
+            "Оберіть потрібний розділ 👇",
+            {
+                reply_markup: adminPanelMenu()
+            }
+        );
+
+        return;
+    }
+
+    // ========================================
     // /start
     // ========================================
 
     if (text === "/start") {
         orderStates.delete(userId);
-
         await sendHome(ctx);
-
         return;
     }
 
@@ -232,7 +298,6 @@ bot.on("message", async (ctx) => {
             .toLowerCase()
             .trim();
 
-        // Приветствие
         if (
             containsAny(normalizedText, [
                 "привет",
@@ -246,11 +311,9 @@ bot.on("message", async (ctx) => {
             ])
         ) {
             await sendHome(ctx);
-
             return;
         }
 
-        // Заказ
         if (
             containsAny(normalizedText, [
                 "хочу заказать",
@@ -285,7 +348,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Сайты
         if (
             containsAny(normalizedText, [
                 "сайт",
@@ -318,7 +380,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Telegram-боты
         if (
             containsAny(normalizedText, [
                 "бот",
@@ -346,7 +407,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Контакты
         if (
             containsAny(normalizedText, [
                 "контакт",
@@ -372,7 +432,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // О нас
         if (
             containsAny(normalizedText, [
                 "кто вы",
@@ -399,7 +458,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Портфолио
         if (
             containsAny(normalizedText, [
                 "наш сайт",
@@ -423,7 +481,6 @@ bot.on("message", async (ctx) => {
             return;
         }
 
-        // Неизвестный запрос
         await ctx.reply(
             "🤔 Не зовсім зрозумів вас.\n\n" +
             "Спробуйте написати:\n\n" +
@@ -440,7 +497,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 1 — имя
+    // ШАГ 1 — ИМЯ
     // ========================================
 
     if (state.step === "name") {
@@ -465,7 +522,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 2 — контакт
+    // ШАГ 2 — КОНТАКТ
     // ========================================
 
     if (state.step === "contact") {
@@ -486,7 +543,7 @@ bot.on("message", async (ctx) => {
     }
 
     // ========================================
-    // Шаг 4 — описание
+    // ШАГ 4 — ОПИСАНИЕ
     // ========================================
 
     if (state.step === "description") {
@@ -496,8 +553,6 @@ bot.on("message", async (ctx) => {
         state.username = ctx.from?.username
             ? "@" + ctx.from.username
             : "не вказано";
-
-        orderStates.set(userId, state);
 
         const previewText =
             "📋 ПЕРЕВІРТЕ ВАШУ ЗАЯВКУ\n\n" +
@@ -530,21 +585,22 @@ bot.on("message", async (ctx) => {
 });
 
 // ========================================
-// Inline-кнопки
+// Callback-кнопки
 // ========================================
 
 bot.on("callback_query", async (ctx) => {
     const data = ctx.callbackQuery?.data;
     const userId = ctx.from?.id;
 
-    await ctx.answerCallbackQuery();
-
     if (!data) {
+        await ctx.answerCallbackQuery();
         return;
     }
 
+    await ctx.answerCallbackQuery();
+
     // ========================================
-    // Главное меню
+    // ГЛАВНОЕ МЕНЮ
     // ========================================
 
     if (data === "menu:home") {
@@ -568,7 +624,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Сайты
+    // САЙТЫ
     // ========================================
 
     if (data === "menu:sites") {
@@ -591,7 +647,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Telegram-боты
+    // TELEGRAM-БОТЫ
     // ========================================
 
     if (data === "menu:bots") {
@@ -611,7 +667,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Преимущества
+    // ПРЕИМУЩЕСТВА
     // ========================================
 
     if (data === "menu:advantages") {
@@ -633,7 +689,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Как работаем
+    // КАК РАБОТАЕМ
     // ========================================
 
     if (data === "menu:process") {
@@ -655,7 +711,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Портфолио
+    // ПОРТФОЛИО
     // ========================================
 
     if (data === "menu:portfolio") {
@@ -672,7 +728,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Про нас
+    // ПРО НАС
     // ========================================
 
     if (data === "menu:about") {
@@ -692,7 +748,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Контакты
+    // КОНТАКТЫ
     // ========================================
 
     if (data === "menu:contacts") {
@@ -710,7 +766,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Начало заказа
+    // НАЧАЛО ЗАКАЗА
     // ========================================
 
     if (data === "menu:order") {
@@ -734,7 +790,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Выбор услуги
+    // ВЫБОР УСЛУГИ
     // ========================================
 
     if (data.startsWith("service:")) {
@@ -764,8 +820,6 @@ bot.on("callback_query", async (ctx) => {
 
         state.step = "description";
 
-        orderStates.set(userId, state);
-
         await editOrderMessage(
             userId,
             state.messageId,
@@ -784,7 +838,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Отмена заявки
+    // ОТМЕНА
     // ========================================
 
     if (data === "order:cancel") {
@@ -801,7 +855,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Изменение заявки
+    // ИЗМЕНЕНИЕ ЗАЯВКИ
     // ========================================
 
     if (data === "order:edit") {
@@ -823,7 +877,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Подтверждение заявки
+    // ПОДТВЕРЖДЕНИЕ ЗАЯВКИ
     // ========================================
 
     if (data === "order:confirm") {
@@ -872,6 +926,9 @@ bot.on("callback_query", async (ctx) => {
             status: "sent"
         });
 
+        statistics.total += 1;
+        statistics.sent += 1;
+
         try {
             await bot.api.sendMessage({
                 chat_id: ADMIN_CHAT_ID,
@@ -893,17 +950,12 @@ bot.on("callback_query", async (ctx) => {
                 "Ми зв'яжемося з вами найближчим часом 🤝",
                 mainMenu()
             );
-
-            console.log(
-                `Заявка #${shortOrderId} відправлена.`
-            );
         } catch (error) {
-            console.error(
-                "Помилка відправки заявки:",
-                error
-            );
+            console.error("Помилка відправки заявки:", error);
 
             pendingOrders.delete(orderId);
+            statistics.total -= 1;
+            statistics.sent -= 1;
 
             await editOrderMessage(
                 userId,
@@ -918,7 +970,134 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Админ — взять в работу
+    // АДМИН — ГЛАВНАЯ
+    // ========================================
+
+    if (data === "admin:home") {
+        if (userId !== ADMIN_CHAT_ID) {
+            return;
+        }
+
+        await editCurrentMessage(
+            ctx,
+            "🔐 АДМІН-ПАНЕЛЬ\n\n" +
+            "Панель керування XXAMIh.\n\n" +
+            "Оберіть потрібний розділ 👇",
+            adminPanelMenu()
+        );
+
+        return;
+    }
+
+    // ========================================
+    // АДМИН — ЗАЯВКИ
+    // ========================================
+
+    if (data === "admin:orders") {
+        if (userId !== ADMIN_CHAT_ID) {
+            return;
+        }
+
+        if (pendingOrders.size === 0) {
+            await editCurrentMessage(
+                ctx,
+                "📋 ЗАЯВКИ\n\n" +
+                "Активних заявок немає.",
+                adminOrdersMenu()
+            );
+
+            return;
+        }
+
+        let ordersText = "📋 АКТИВНІ ЗАЯВКИ\n\n";
+
+        for (const [orderId, order] of pendingOrders) {
+            ordersText +=
+                "🔢 #" + orderId.slice(-6) + "\n" +
+                "👤 " + order.name + "\n" +
+                "💬 " + order.username + "\n" +
+                "📊 " + getStatusText(order.status) + "\n\n";
+        }
+
+        await editCurrentMessage(
+            ctx,
+            ordersText,
+            adminOrdersMenu()
+        );
+
+        return;
+    }
+
+    // ========================================
+    // АДМИН — СТАТИСТИКА
+    // ========================================
+
+    if (data === "admin:stats") {
+        if (userId !== ADMIN_CHAT_ID) {
+            return;
+        }
+
+        await editCurrentMessage(
+            ctx,
+            "📊 СТАТИСТИКА\n\n" +
+            "📦 Всього заявок: " +
+            statistics.total +
+            "\n\n" +
+            "📨 Відправлено: " +
+            statistics.sent +
+            "\n" +
+            "🛠 В роботі: " +
+            statistics.working +
+            "\n" +
+            "✅ Завершено: " +
+            statistics.completed +
+            "\n" +
+            "❌ Відхилено: " +
+            statistics.rejected +
+            "\n\n" +
+            "📌 Активних зараз: " +
+            pendingOrders.size,
+            new InlineKeyboardBuilder()
+                .text("🔄 Оновити", "admin:stats")
+                .row()
+                .text("🔙 Назад", "admin:home")
+                .build()
+        );
+
+        return;
+    }
+
+    // ========================================
+    // АДМИН — НАСТРОЙКИ
+    // ========================================
+
+    if (data === "admin:settings") {
+        if (userId !== ADMIN_CHAT_ID) {
+            return;
+        }
+
+        await editCurrentMessage(
+            ctx,
+            "⚙️ НАЛАШТУВАННЯ\n\n" +
+            "🤖 Бот: XXAMIh\n" +
+            "🟢 Статус: працює\n\n" +
+            "🌐 Сайт:\n" +
+            "https://xxamihsite.vercel.app/\n\n" +
+            "💬 Telegram:\n" +
+            "@Tuzkozirn1\n" +
+            "@xxamih\n\n" +
+            "🆔 Адміністратор:\n" +
+            ADMIN_CHAT_ID,
+            new InlineKeyboardBuilder()
+                .text("🔙 Назад", "admin:home")
+                .build()
+        );
+
+        return;
+    }
+
+    // ========================================
+    // АДМИН — ВЗЯТЬ В РАБОТУ
     // ========================================
 
     if (data.startsWith("admin:accept:")) {
@@ -931,14 +1110,13 @@ bot.on("callback_query", async (ctx) => {
 
         if (!order) {
             await ctx.reply(
-                "⚠️ Заявка не знайдена або вже оброблена."
+                "⚠️ Заявка вже оброблена або не знайдена."
             );
 
             return;
         }
 
         try {
-            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -952,7 +1130,6 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -970,12 +1147,12 @@ bot.on("callback_query", async (ctx) => {
                 reply_markup: adminWorkingMenu(orderId)
             });
 
-            order.status = "working";
-            pendingOrders.set(orderId, order);
+            statistics.sent -= 1;
+            statistics.working += 1;
 
-            console.log(
-                `Заявка #${orderId.slice(-6)} взята в роботу.`
-            );
+            order.status = "working";
+
+            pendingOrders.set(orderId, order);
         } catch (error) {
             console.error(
                 "Помилка зміни статусу:",
@@ -987,7 +1164,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Админ — завершить
+    // АДМИН — ЗАВЕРШИТЬ
     // ========================================
 
     if (data.startsWith("admin:complete:")) {
@@ -1000,14 +1177,13 @@ bot.on("callback_query", async (ctx) => {
 
         if (!order) {
             await ctx.reply(
-                "⚠️ Заявка не знайдена або вже оброблена."
+                "⚠️ Заявка вже оброблена або не знайдена."
             );
 
             return;
         }
 
         try {
-            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -1020,7 +1196,6 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -1037,11 +1212,10 @@ bot.on("callback_query", async (ctx) => {
                     "📊 Статус: ✅ ЗАВЕРШЕНА"
             });
 
-            pendingOrders.delete(orderId);
+            statistics.working -= 1;
+            statistics.completed += 1;
 
-            console.log(
-                `Заявка #${orderId.slice(-6)} завершена.`
-            );
+            pendingOrders.delete(orderId);
         } catch (error) {
             console.error(
                 "Помилка завершення заявки:",
@@ -1053,7 +1227,7 @@ bot.on("callback_query", async (ctx) => {
     }
 
     // ========================================
-    // Админ — отклонить
+    // АДМИН — ОТКЛОНИТЬ
     // ========================================
 
     if (data.startsWith("admin:reject:")) {
@@ -1066,14 +1240,13 @@ bot.on("callback_query", async (ctx) => {
 
         if (!order) {
             await ctx.reply(
-                "⚠️ Заявка не знайдена або вже оброблена."
+                "⚠️ Заявка вже оброблена або не знайдена."
             );
 
             return;
         }
 
         try {
-            // Обновляем клиента
             await editOrderMessage(
                 order.userId,
                 order.clientMessageId,
@@ -1086,7 +1259,6 @@ bot.on("callback_query", async (ctx) => {
                 mainMenu()
             );
 
-            // Обновляем админское сообщение
             await bot.api.editMessageText({
                 chat_id: ADMIN_CHAT_ID,
                 message_id: ctx.callbackQuery.message.message_id,
@@ -1103,11 +1275,10 @@ bot.on("callback_query", async (ctx) => {
                     "📊 Статус: ❌ ВІДХИЛЕНА"
             });
 
-            pendingOrders.delete(orderId);
+            statistics.sent -= 1;
+            statistics.rejected += 1;
 
-            console.log(
-                `Заявка #${orderId.slice(-6)} відхилена.`
-            );
+            pendingOrders.delete(orderId);
         } catch (error) {
             console.error(
                 "Помилка відхилення заявки:",
@@ -1120,7 +1291,7 @@ bot.on("callback_query", async (ctx) => {
 });
 
 // ========================================
-// Обработка ошибок
+// Ошибки
 // ========================================
 
 bot.catch((error) => {
@@ -1128,7 +1299,7 @@ bot.catch((error) => {
 });
 
 // ========================================
-// Telegram Webhook
+// Webhook
 // ========================================
 
 registerExpressWebhook(bot, app, {
