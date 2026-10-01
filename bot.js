@@ -17,6 +17,7 @@ const bot = new Bot(BOT_TOKEN);
 const app = express();
 
 const SITE_URL = "https://xxamihsite.vercel.app/";
+const RENDER_URL = "https://telegram-bot-5-9gzp.onrender.com/";
 
 const orderStates = new Map();
 const pendingOrders = new Map();
@@ -1152,12 +1153,9 @@ bot.on("message", async (ctx) => {
       "інтернет-магазин",
     ])
   ) {
-    await ctx.reply(
-      sitesText(),
-      {
-        reply_markup: backMenu(),
-      },
-    );
+    await ctx.reply(sitesText(), {
+      reply_markup: backMenu(),
+    });
 
     return;
   }
@@ -1171,12 +1169,9 @@ bot.on("message", async (ctx) => {
       "телеграм-бот",
     ])
   ) {
-    await ctx.reply(
-      botsText(),
-      {
-        reply_markup: backMenu(),
-      },
-    );
+    await ctx.reply(botsText(), {
+      reply_markup: backMenu(),
+    });
 
     return;
   }
@@ -1189,12 +1184,9 @@ bot.on("message", async (ctx) => {
       "hosting",
     ])
   ) {
-    await ctx.reply(
-      hostingText(),
-      {
-        reply_markup: backMenu(),
-      },
-    );
+    await ctx.reply(hostingText(), {
+      reply_markup: backMenu(),
+    });
 
     return;
   }
@@ -1208,12 +1200,9 @@ bot.on("message", async (ctx) => {
       "написати вам",
     ])
   ) {
-    await ctx.reply(
-      contactsText(),
-      {
-        reply_markup: backMenu(),
-      },
-    );
+    await ctx.reply(contactsText(), {
+      reply_markup: backMenu(),
+    });
 
     return;
   }
@@ -1226,12 +1215,9 @@ bot.on("message", async (ctx) => {
       "xxamih",
     ])
   ) {
-    await ctx.reply(
-      aboutText(),
-      {
-        reply_markup: backMenu(),
-      },
-    );
+    await ctx.reply(aboutText(), {
+      reply_markup: backMenu(),
+    });
 
     return;
   }
@@ -1251,12 +1237,9 @@ bot.on("message", async (ctx) => {
       .text("🔙 Назад", "menu:home")
       .build();
 
-    await ctx.reply(
-      portfolioText(),
-      {
-        reply_markup: keyboard,
-      },
-    );
+    await ctx.reply(portfolioText(), {
+      reply_markup: keyboard,
+    });
 
     return;
   }
@@ -1289,3 +1272,17 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Сервер запущений на порту ${PORT}`);
 });
+
+setInterval(async () => {
+  try {
+    const response = await fetch(RENDER_URL);
+
+    console.log(
+      `Keep-alive: сервер відповів ${response.status} ✅`,
+    );
+  } catch (error) {
+    console.log(
+      `Keep-alive помилка: ${error.message}`,
+    );
+  }
+}, 5 * 60 * 1000);
