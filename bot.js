@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 
 const {
     Bot,
@@ -26,9 +27,12 @@ if (!BOT_TOKEN) {
 
 
 const bot = new Bot(BOT_TOKEN);
-
 const app = express();
 
+
+/* =========================
+   SERVER SETTINGS
+========================= */
 
 app.use(express.json());
 
@@ -60,20 +64,37 @@ app.use((req, res, next) => {
 });
 
 
+/* =========================
+   CONSTANTS
+========================= */
+
 const SITE_URL =
-    "https://xxamihsite.vercel.app/";
+    "https://selcker-site.vercel.app/";
+
+const BOT_URL =
+    "https://t.me/Palundras_bot";
 
 const RENDER_URL =
     "https://telegram-bot-5-9gzp.onrender.com/";
 
 
+/* =========================
+   STORAGE
+========================= */
+
 const orderStates = new Map();
 
 const pendingOrders = new Map();
 
+const orderLinkTokens = new Map();
+
 
 let nextOrderId = 1;
 
+
+/* =========================
+   STATISTICS
+========================= */
 
 const statistics = {
 
@@ -88,7 +109,6 @@ const statistics = {
     rejected: 0
 
 };
-
 
 
 /* =========================
@@ -146,8 +166,8 @@ function menuKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 function backMenu() {
@@ -160,8 +180,8 @@ function backMenu() {
         )
 
         .build();
-}
 
+}
 
 
 function orderKeyboard() {
@@ -181,8 +201,8 @@ function orderKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 function cancelKeyboard() {
@@ -195,8 +215,8 @@ function cancelKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 function serviceKeyboard() {
@@ -228,8 +248,8 @@ function serviceKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 function confirmKeyboard() {
@@ -254,8 +274,8 @@ function confirmKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 /* =========================
@@ -277,8 +297,8 @@ function adminNewOrderKeyboard(orderId) {
         )
 
         .build();
-}
 
+}
 
 
 function adminWorkingKeyboard(orderId) {
@@ -291,8 +311,8 @@ function adminWorkingKeyboard(orderId) {
         )
 
         .build();
-}
 
+}
 
 
 function adminMenuKeyboard() {
@@ -322,8 +342,8 @@ function adminMenuKeyboard() {
         )
 
         .build();
-}
 
+}
 
 
 /* =========================
@@ -340,8 +360,8 @@ function textMatches(text, phrases) {
         (phrase) =>
             normalized.includes(phrase)
     );
-}
 
+}
 
 
 /* =========================
@@ -366,8 +386,8 @@ function homeText() {
 на готовий цифровий продукт.
 
 Оберіть потрібний розділ 👇`;
-}
 
+}
 
 
 function sitesText() {
@@ -400,8 +420,8 @@ function sitesText() {
 
 Хочете свій сайт?
 Натисніть «📝 Замовити» та залиште заявку.`;
-}
 
+}
 
 
 function botsText() {
@@ -438,8 +458,8 @@ function botsText() {
 
 Потрібен Telegram-бот?
 Оформіть заявку через «📝 Замовити».`;
-}
 
+}
 
 
 function advantagesText() {
@@ -469,8 +489,8 @@ function advantagesText() {
 💡 Від ідеї до готового продукту
 Ви можете замовити розробку,
 налаштування та розміщення в одному місці.`;
-}
 
+}
 
 
 function processText() {
@@ -502,8 +522,8 @@ function processText() {
 яке можна використовувати в роботі.
 
 ✨ Просто. Зрозуміло. Поетапно.`;
-}
 
+}
 
 
 function hostingText() {
@@ -542,8 +562,8 @@ $85 / місяць
 💡 Не знаєте, який варіант потрібен?
 Розкажіть про свій проєкт — допоможемо підібрати
 відповідний ресурс.`;
-}
 
+}
 
 
 function portfolioText() {
@@ -552,20 +572,17 @@ function portfolioText() {
 
 Хочете побачити, що ми створюємо?
 
-На нашому сайті можна переглянути
-проєкти, дизайн та приклади робіт.
-
-🌐 Сайт:
+🌐 Сайт Selcker:
 ${SITE_URL}
 
 🤖 Telegram-бот:
-https://t.me/Palundras_bot
+${BOT_URL}
 
 💡 Маєте власну ідею?
 Навіть якщо вашого проєкту ще немає
 в портфоліо — можемо створити його з нуля.`;
-}
 
+}
 
 
 function aboutText() {
@@ -593,8 +610,8 @@ function aboutText() {
 
 🚀 Наша задача —
 перетворити вашу ідею на готовий цифровий продукт.`;
-}
 
+}
 
 
 function contactsText() {
@@ -611,8 +628,8 @@ ${SITE_URL}
 
 Напишіть нам, коротко опишіть ваше завдання
 — і ми обговоримо наступні кроки.`;
-}
 
+}
 
 
 function orderIntroText() {
@@ -633,8 +650,8 @@ function orderIntroText() {
 готову заявку перед відправкою.
 
 Натискайте «✅ Почати» та починаємо 👇`;
-}
 
+}
 
 
 function nameStepText() {
@@ -644,8 +661,8 @@ function nameStepText() {
 Як вас звати?
 
 Напишіть своє ім'я нижче 👇`;
-}
 
+}
 
 
 function contactStepText() {
@@ -660,8 +677,8 @@ function contactStepText() {
 • інший зручний спосіб зв'язку
 
 Напишіть контакт нижче 👇`;
-}
 
+}
 
 
 function serviceStepText() {
@@ -671,8 +688,8 @@ function serviceStepText() {
 Що саме вам потрібно?
 
 Оберіть один із варіантів нижче 👇`;
-}
 
+}
 
 
 function descriptionStepText() {
@@ -685,8 +702,8 @@ function descriptionStepText() {
 «Потрібен сайт для компанії з інформацією про послуги та контактами».
 
 Напишіть опис нижче 👇`;
-}
 
+}
 
 
 function confirmationText(state) {
@@ -702,8 +719,8 @@ ${state.description}
 
 Все правильно?
 Натисніть кнопку нижче.`;
-}
 
+}
 
 
 /* =========================
@@ -715,6 +732,7 @@ function formatOrderForAdmin(order) {
     return `🆕 НОВА ЗАЯВКА #${order.orderId}
 
 📌 Статус: НОВА
+📍 Джерело: ${order.username === "з сайту Selcker" ? "Сайт Selcker" : "Telegram"}
 
 👤 Ім'я: ${order.name}
 🔹 Username: ${order.username}
@@ -723,8 +741,8 @@ function formatOrderForAdmin(order) {
 
 📝 Опис:
 ${order.description}`;
-}
 
+}
 
 
 function formatWorkingOrder(order) {
@@ -740,8 +758,8 @@ function formatWorkingOrder(order) {
 
 📝 Опис:
 ${order.description}`;
-}
 
+}
 
 
 function formatCompletedOrder(order) {
@@ -757,8 +775,8 @@ function formatCompletedOrder(order) {
 
 📝 Опис:
 ${order.description}`;
-}
 
+}
 
 
 function formatRejectedOrder(order) {
@@ -774,12 +792,12 @@ function formatRejectedOrder(order) {
 
 📝 Опис:
 ${order.description}`;
+
 }
 
 
-
 /* =========================
-   EDIT MESSAGE
+   MESSAGE HELPERS
 ========================= */
 
 async function editCurrentMessage(
@@ -811,8 +829,8 @@ async function editCurrentMessage(
             replyMarkup
 
     });
-}
 
+}
 
 
 async function editOrderMessage(
@@ -836,8 +854,41 @@ async function editOrderMessage(
             replyMarkup
 
     });
+
 }
 
+
+async function notifyUser(
+    userId,
+    text
+) {
+
+    if (!userId) {
+        return;
+    }
+
+
+    try {
+
+        await bot.api.sendMessage({
+
+            chat_id:
+                userId,
+
+            text
+
+        });
+
+    } catch (error) {
+
+        console.log(
+            "Не вдалося надіслати повідомлення клієнту:",
+            error.message
+        );
+
+    }
+
+}
 
 
 /* =========================
@@ -856,8 +907,8 @@ async function sendHome(ctx) {
         }
 
     );
-}
 
+}
 
 
 /* =========================
@@ -868,6 +919,7 @@ async function startOrderFromCallback(ctx) {
 
     const userId =
         ctx.from.id;
+
 
     const message =
         ctx.callbackQuery?.message;
@@ -916,8 +968,8 @@ async function startOrderFromCallback(ctx) {
         cancelKeyboard()
 
     );
-}
 
+}
 
 
 async function startOrderFromText(ctx) {
@@ -966,8 +1018,8 @@ async function startOrderFromText(ctx) {
         }
 
     );
-}
 
+}
 
 
 async function cancelOrder(
@@ -975,7 +1027,9 @@ async function cancelOrder(
     userId
 ) {
 
-    orderStates.delete(userId);
+    orderStates.delete(
+        userId
+    );
 
 
     if (ctx.callbackQuery?.message) {
@@ -1004,13 +1058,9 @@ async function cancelOrder(
         );
 
     }
+
 }
 
-
-
-/* =========================
-   ADMIN PANEL
-========================= */
 
 async function showAdminPanel(ctx) {
 
@@ -1026,12 +1076,12 @@ async function showAdminPanel(ctx) {
         }
 
     );
+
 }
 
 
-
 /* =========================
-   WEBSITE API
+   WEBSITE ORDER API
 ========================= */
 
 app.post(
@@ -1195,10 +1245,19 @@ app.post(
             }
 
 
+            const orderId =
+                nextOrderId++;
+
+
+            const linkToken =
+                crypto
+                    .randomBytes(12)
+                    .toString("base64url");
+
+
             const order = {
 
-                orderId:
-                    nextOrderId++,
+                orderId,
 
                 userId:
                     null,
@@ -1225,7 +1284,9 @@ app.post(
                     "sent",
 
                 adminMessageId:
-                    null
+                    null,
+
+                linkToken
 
             };
 
@@ -1235,6 +1296,15 @@ app.post(
                 order.orderId,
 
                 order
+
+            );
+
+
+            orderLinkTokens.set(
+
+                linkToken,
+
+                order.orderId
 
             );
 
@@ -1267,6 +1337,10 @@ app.post(
                 adminMessage.message_id;
 
 
+            const telegramLink =
+                `${BOT_URL}?start=order_${linkToken}`;
+
+
             return res
                 .status(200)
                 .json({
@@ -1274,7 +1348,9 @@ app.post(
                     success: true,
 
                     orderId:
-                        order.orderId
+                        order.orderId,
+
+                    telegramLink
 
                 });
 
@@ -1305,18 +1381,160 @@ app.post(
 );
 
 
-
 /* =========================
-   /START
+   START COMMAND
 ========================= */
 
 bot.command(
     "start",
     async (ctx) => {
 
+        const userId =
+            ctx.from.id;
+
+
+        const startText =
+            ctx.message?.text || "";
+
+
+        const parts =
+            startText
+                .trim()
+                .split(/\s+/);
+
+
+        const parameter =
+            parts[1] || "";
+
+
         orderStates.delete(
-            ctx.from.id
+            userId
         );
+
+
+        if (
+            parameter.startsWith(
+                "order_"
+            )
+        ) {
+
+            const token =
+                parameter.substring(6);
+
+
+            const orderId =
+                orderLinkTokens.get(
+                    token
+                );
+
+
+            if (!orderId) {
+
+                await ctx.reply(
+
+                    `❌ Посилання на заявку недійсне.
+
+Створіть нову заявку на сайті Selcker.`,
+
+                    {
+                        reply_markup:
+                            menuKeyboard()
+                    }
+
+                );
+
+                return;
+
+            }
+
+
+            const order =
+                pendingOrders.get(
+                    orderId
+                );
+
+
+            if (!order) {
+
+                await ctx.reply(
+
+                    "❌ Заявку не знайдено.",
+
+                    {
+                        reply_markup:
+                            menuKeyboard()
+                    }
+
+                );
+
+                return;
+
+            }
+
+
+            if (
+
+                order.userId &&
+                order.userId !== userId
+
+            ) {
+
+                await ctx.reply(
+
+                    `❌ Ця заявка вже прив'язана до іншого Telegram-акаунта.`,
+
+                    {
+                        reply_markup:
+                            menuKeyboard()
+                    }
+
+                );
+
+                return;
+
+            }
+
+
+            order.userId =
+                userId;
+
+
+            order.username =
+                ctx.from?.username
+                    ? `@${ctx.from.username}`
+                    : "не вказано";
+
+
+            orderLinkTokens.delete(
+                token
+            );
+
+
+            await ctx.reply(
+
+                `✅ TELEGRAM ПІДКЛЮЧЕНО
+
+Заявка #${order.orderId}
+успішно прив'язана до вашого Telegram.
+
+📌 Поточний статус: НОВА
+
+Ви отримуватимете повідомлення,
+коли статус заявки зміниться.
+
+Оберіть потрібний розділ 👇`,
+
+                {
+                    reply_markup:
+                        menuKeyboard()
+                }
+
+            );
+
+
+            return;
+
+        }
 
 
         await sendHome(ctx);
@@ -1325,9 +1543,8 @@ bot.command(
 );
 
 
-
 /* =========================
-   /ADMIN
+   ADMIN COMMAND
 ========================= */
 
 bot.command(
@@ -1350,9 +1567,8 @@ bot.command(
 );
 
 
-
 /* =========================
-   CALLBACKS
+   CALLBACK QUERIES
 ========================= */
 
 bot.on(
@@ -1362,12 +1578,12 @@ bot.on(
         const data =
             ctx.callbackQuery?.data || "";
 
+
         const userId =
             ctx.from.id;
 
 
         await ctx.answerCallbackQuery();
-
 
 
         /* HOME */
@@ -1397,7 +1613,6 @@ bot.on(
         }
 
 
-
         /* SITES */
 
         if (
@@ -1418,7 +1633,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* BOTS */
@@ -1443,7 +1657,6 @@ bot.on(
         }
 
 
-
         /* ADVANTAGES */
 
         if (
@@ -1464,7 +1677,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* PROCESS */
@@ -1489,7 +1701,6 @@ bot.on(
         }
 
 
-
         /* HOSTING */
 
         if (
@@ -1512,7 +1723,6 @@ bot.on(
         }
 
 
-
         /* PORTFOLIO */
 
         if (
@@ -1532,7 +1742,7 @@ bot.on(
 
                     .url(
                         "🤖 Відкрити бота",
-                        "https://t.me/Palundras_bot"
+                        BOT_URL
                     )
 
                     .row()
@@ -1561,7 +1771,6 @@ bot.on(
         }
 
 
-
         /* ABOUT */
 
         if (
@@ -1582,7 +1791,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* ORDER */
@@ -1607,7 +1815,6 @@ bot.on(
         }
 
 
-
         /* ORDER START */
 
         if (
@@ -1624,8 +1831,7 @@ bot.on(
         }
 
 
-
-        /* CANCEL */
+        /* ORDER CANCEL */
 
         if (
             data === "order:cancel"
@@ -1642,8 +1848,7 @@ bot.on(
         }
 
 
-
-        /* EDIT */
+        /* ORDER EDIT */
 
         if (
             data === "order:edit"
@@ -1673,7 +1878,8 @@ bot.on(
             }
 
 
-            state.step = "name";
+            state.step =
+                "name";
 
 
             await editOrderMessage(
@@ -1692,7 +1898,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* SERVICE */
@@ -1768,8 +1973,7 @@ bot.on(
         }
 
 
-
-        /* CONFIRM */
+        /* TELEGRAM ORDER CONFIRM */
 
         if (
             data === "order:confirm"
@@ -1829,6 +2033,9 @@ bot.on(
                     "sent",
 
                 adminMessageId:
+                    null,
+
+                linkToken:
                     null
 
             };
@@ -1849,7 +2056,6 @@ bot.on(
 
 
             const adminMessage =
-
                 await bot.api.sendMessage({
 
                     chat_id:
@@ -1904,7 +2110,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* ADMIN ORDERS */
@@ -1980,7 +2185,6 @@ ${list}`,
         }
 
 
-
         /* ADMIN STATS */
 
         if (
@@ -2024,7 +2228,6 @@ ${list}`,
         }
 
 
-
         /* ADMIN SETTINGS */
 
         if (
@@ -2049,9 +2252,10 @@ ${list}`,
 
 👤 Admin ID: ${ADMIN_CHAT_ID}
 🌐 Сайт: ${SITE_URL}
-🤖 Бот працює через webhook.
+🤖 Бот: ${BOT_URL}
+☁️ Render: ${RENDER_URL}
 
-Тут можна буде додати додаткові налаштування пізніше.`,
+Бот працює через webhook.`,
 
                 adminMenuKeyboard()
 
@@ -2061,7 +2265,6 @@ ${list}`,
             return;
 
         }
-
 
 
         /* TAKE ORDER */
@@ -2095,17 +2298,6 @@ ${list}`,
 
 
             if (!order) {
-
-                await editCurrentMessage(
-
-                    ctx,
-
-                    "❌ Заявку не знайдено.",
-
-                    adminMenuKeyboard()
-
-                );
-
 
                 return;
 
@@ -2150,41 +2342,25 @@ ${list}`,
             });
 
 
-            if (
-                order.userId &&
-                order.clientMessageId
-            ) {
+            await notifyUser(
 
-                await editOrderMessage(
+                order.userId,
 
-                    order.userId,
+                `🛠 ЗАЯВКА #${order.orderId} ПРИЙНЯТА
 
-                    order.clientMessageId,
+Ваша заявка прийнята в роботу.
 
-                    `🛠 ЗАЯВКА В РОБОТІ
+📌 Статус: В РОБОТІ
+🛠 Послуга: ${order.service}
 
-Дякуємо, ${order.name}!
+Ми вже працюємо над вашим замовленням.`
 
-Ми взяли вашу заявку в роботу та вже працюємо над нею.`,
-
-                    new InlineKeyboardBuilder()
-
-                        .text(
-                            "🏠 Головне меню",
-                            "menu:home"
-                        )
-
-                        .build()
-
-                );
-
-            }
+            );
 
 
             return;
 
         }
-
 
 
         /* REJECT ORDER */
@@ -2218,17 +2394,6 @@ ${list}`,
 
 
             if (!order) {
-
-                await editCurrentMessage(
-
-                    ctx,
-
-                    "❌ Заявку не знайдено.",
-
-                    adminMenuKeyboard()
-
-                );
-
 
                 return;
 
@@ -2268,41 +2433,24 @@ ${list}`,
             });
 
 
-            if (
-                order.userId &&
-                order.clientMessageId
-            ) {
+            await notifyUser(
 
-                await editOrderMessage(
+                order.userId,
 
-                    order.userId,
+                `❌ ЗАЯВКА #${order.orderId}
 
-                    order.clientMessageId,
+На жаль, вашу заявку не прийнято в роботу.
 
-                    `❌ ЗАЯВКУ ВІДХИЛЕНО
+📌 Статус: ВІДХИЛЕНО
 
-На жаль, зараз ми не можемо взяти цю заявку в роботу.
+Дякуємо за звернення до Selcker.`
 
-Дякуємо за звернення.`,
-
-                    new InlineKeyboardBuilder()
-
-                        .text(
-                            "🏠 Головне меню",
-                            "menu:home"
-                        )
-
-                        .build()
-
-                );
-
-            }
+            );
 
 
             return;
 
         }
-
 
 
         /* COMPLETE ORDER */
@@ -2336,17 +2484,6 @@ ${list}`,
 
 
             if (!order) {
-
-                await editCurrentMessage(
-
-                    ctx,
-
-                    "❌ Заявку не знайдено.",
-
-                    adminMenuKeyboard()
-
-                );
-
 
                 return;
 
@@ -2386,35 +2523,19 @@ ${list}`,
             });
 
 
-            if (
-                order.userId &&
-                order.clientMessageId
-            ) {
+            await notifyUser(
 
-                await editOrderMessage(
+                order.userId,
 
-                    order.userId,
+                `✅ ЗАЯВКА #${order.orderId} ЗАВЕРШЕНА
 
-                    order.clientMessageId,
+Роботу над вашою заявкою завершено.
 
-                    `✅ ЗАЯВКУ ЗАВЕРШЕНО
+📌 Статус: ЗАВЕРШЕНО
 
-Дякуємо, ${order.name}!
+Дякуємо за звернення до Selcker!`
 
-Роботу над вашою заявкою завершено.`,
-
-                    new InlineKeyboardBuilder()
-
-                        .text(
-                            "🏠 Головне меню",
-                            "menu:home"
-                        )
-
-                        .build()
-
-                );
-
-            }
+            );
 
 
             return;
@@ -2423,7 +2544,6 @@ ${list}`,
 
     }
 );
-
 
 
 /* =========================
@@ -2458,11 +2578,7 @@ bot.on(
             );
 
 
-
-        /* ORDER STATE */
-
         if (state) {
-
 
             if (
                 state.step ===
@@ -2493,7 +2609,6 @@ bot.on(
                 return;
 
             }
-
 
 
             if (
@@ -2527,7 +2642,6 @@ bot.on(
             }
 
 
-
             if (
                 state.step ===
                 "service"
@@ -2549,7 +2663,6 @@ bot.on(
                 return;
 
             }
-
 
 
             if (
@@ -2587,7 +2700,6 @@ bot.on(
         }
 
 
-
         /* GREETINGS */
 
         if (
@@ -2614,7 +2726,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* ORDER */
@@ -2645,7 +2756,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* SITES */
@@ -2686,7 +2796,6 @@ bot.on(
         }
 
 
-
         /* BOTS */
 
         if (
@@ -2724,7 +2833,6 @@ bot.on(
         }
 
 
-
         /* HOSTING */
 
         if (
@@ -2759,7 +2867,6 @@ bot.on(
             return;
 
         }
-
 
 
         /* CONTACTS */
@@ -2799,7 +2906,6 @@ bot.on(
         }
 
 
-
         /* ABOUT */
 
         if (
@@ -2836,7 +2942,6 @@ bot.on(
         }
 
 
-
         /* PORTFOLIO */
 
         if (
@@ -2870,7 +2975,7 @@ bot.on(
 
                     .url(
                         "🤖 Відкрити бота",
-                        "https://t.me/Palundras_bot"
+                        BOT_URL
                     )
 
                     .row()
@@ -2900,7 +3005,6 @@ bot.on(
         }
 
 
-
         /* UNKNOWN */
 
         await ctx.reply(
@@ -2926,7 +3030,6 @@ bot.on(
 );
 
 
-
 /* =========================
    WEBHOOK
 ========================= */
@@ -2938,14 +3041,15 @@ registerExpressWebhook(
     app,
 
     {
-        path: "/telegram",
+        path:
+            "/telegram",
 
         allowUnauthenticated:
             true
+
     }
 
 );
-
 
 
 /* =========================
@@ -2964,7 +3068,6 @@ app.get(
 );
 
 
-
 app.listen(
     PORT,
     () => {
@@ -2975,7 +3078,6 @@ app.listen(
 
     }
 );
-
 
 
 /* =========================
